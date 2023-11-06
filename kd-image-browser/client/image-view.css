@@ -18,18 +18,18 @@
 }
 
 .image-browser-page-navigation {
-    display: block !important;
     text-align: center;
 }
 
 .image-browser-page-navigation button {
     height: 100%;
-    margin: 0 10px;
+    /* margin: 0 10px; */
 }
 
 .image-browser-page-navigation .form {
-    display: inline-block;
-    vertical-align: middle;
+    flex-grow: 1 !important;
+    min-width: min(16px, 50px) !important;
+    width: 100px;
 }
 
 .image-browser-page-navigation .form .block {
