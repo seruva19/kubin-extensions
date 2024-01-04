@@ -2,12 +2,12 @@
   const container = document.querySelector('#kd-image-editor-container')
   container.style.height = `${window.innerHeight - 100}px`
 
-  const { TABS, TOOLS } = FilerobotImageEditor
   let filerobotImageEditor = undefined
 
   kubin.imageEditor = {
     openImage: image => {
       if (!filerobotImageEditor) {
+        const { TABS, TOOLS } = FilerobotImageEditor
         filerobotImageEditor = new FilerobotImageEditor(container, {
           source: image,
           onSave: editedImageObject => {
