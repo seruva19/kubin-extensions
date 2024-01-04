@@ -1,0 +1,11 @@
+.kd-image-editor-input {
+  display: none;
+}
+
+body.dark #kd-image-editor-container * {
+  color: initial;
+}
+
+.FIE_tabs {
+  box-shadow: none !important;
+}
