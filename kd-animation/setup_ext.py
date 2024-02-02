@@ -136,6 +136,8 @@ def create_deforum_animation(
 
 
 def mount(kubin):
+    import fileinput
+
     deforum_repo = "https://github.com/ai-forever/deforum-kandinsky"
     commit = "d793ee9"
     destination_dir = "extensions/kd-animation/deforum_kandinsky"
@@ -157,3 +159,11 @@ def mount(kubin):
             shutil.rmtree(temp_dir)
         except:
             pass
+
+    for file_path in [f"{destination_dir}/pipelines/pipeline_kandinsky_img2img.py", f"{destination_dir}/pipelines/pipeline_kandinsky2_2_img2img.py"]:
+        with fileinput.FileInput(file_path, inplace=True) as file:
+            for line in file:
+                print(line.replace("randn_tensor,", ""))
+
+        with open(file_path, 'a') as file:
+            file.write('\nfrom diffusers.utils.torch_utils import randn_tensor')
