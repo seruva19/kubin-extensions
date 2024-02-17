@@ -12,7 +12,9 @@ def setup(kubin):
     rmbg = None
 
     source_image = gr.Image(
-        type="pil", label="Image to remove background from", elem_classes=["full-height"]
+        type="pil",
+        label="Image to remove background from",
+        elem_classes=["full-height"],
     )
 
     def remove_background(cache_dir, device, source_image):
@@ -22,17 +24,17 @@ def setup(kubin):
             rmbg = BriaRMBG()
             rmbg = BriaRMBG.from_pretrained("briaai/RMBG-1.4", cache_dir=cache_dir)
             rmbg.to(device)
-            rmbg.eval()    
+            rmbg.eval()
 
         source_image_np = np.array(source_image)
-        model_input_size = [1024,1024]
+        model_input_size = [1024, 1024]
         source_image_size = source_image_np.shape[0:2]
         image = preprocess_image(source_image_np, model_input_size).to(device)
-        result=rmbg(image)
+        result = rmbg(image)
         result_image = postprocess_image(result[0][0], source_image_size)
 
         pil_im = Image.fromarray(result_image)
-        no_bg_image = Image.new("RGBA", pil_im.size, (0,0,0,0))
+        no_bg_image = Image.new("RGBA", pil_im.size, (0, 0, 0, 0))
         no_bg_image.paste(source_image, mask=pil_im)
 
         return no_bg_image
@@ -55,7 +57,7 @@ def setup(kubin):
                 inputs=[
                     gr.State(kubin.params("general", "cache_dir")),
                     gr.State(kubin.params("general", "device")),
-                    source_image
+                    source_image,
                 ],
                 outputs=no_bg_output,
                 js=[
