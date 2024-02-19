@@ -160,10 +160,13 @@ def mount(kubin):
         except:
             pass
 
-    for file_path in [f"{destination_dir}/pipelines/pipeline_kandinsky_img2img.py", f"{destination_dir}/pipelines/pipeline_kandinsky2_2_img2img.py"]:
-        with fileinput.FileInput(file_path, inplace=True) as file:
-            for line in file:
-                print(line.replace("randn_tensor,", ""))
+        for file_path in [
+            f"{destination_dir}/pipelines/pipeline_kandinsky_img2img.py",
+            f"{destination_dir}/pipelines/pipeline_kandinsky2_2_img2img.py",
+        ]:
+            with fileinput.FileInput(file_path, inplace=True) as file:
+                for line in file:
+                    print(line.replace("randn_tensor,", ""))
 
-        with open(file_path, 'a') as file:
-            file.write('\nfrom diffusers.utils.torch_utils import randn_tensor')
+            with open(file_path, "a") as file:
+                file.write("\nfrom diffusers.utils.torch_utils import randn_tensor")
