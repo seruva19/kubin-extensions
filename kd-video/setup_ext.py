@@ -42,7 +42,7 @@ def setup(kubin):
                     )
                     guidance_scale = gr.Slider(1, 30, 5, step=1, label="Guidance scale")
                     interpolation_guidance_scale = gr.Slider(
-                        0, 1, 0.5, step=0.1, label="Interpolation guidance scale"
+                        0, 1, 0.25, step=0.1, label="Interpolation guidance scale"
                     )
                 with gr.Row():
                     width = gr.Number(value="512", step=8, label="Width")
