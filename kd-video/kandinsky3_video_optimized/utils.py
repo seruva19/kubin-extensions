@@ -32,7 +32,7 @@ def vram_info(stage):
     free, total = torch.cuda.mem_get_info(0)
 
     print(
-        f"({stage}) VRAM free: {in_mb(free)} Mb, total: {in_mb(total)} Mb, reserved: {in_mb(reserved)} Mb, allocated: {in_mb(allocated)} Mb",
+        f"({stage}) VRAM free: {in_mb(free)} Mb, total: {in_mb(total)} Mb, used: {in_mb(allocated)} Mb, reserved: {in_mb(reserved)} Mb",
         file=sys.stderr,
     )
 
