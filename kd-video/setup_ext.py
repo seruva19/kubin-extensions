@@ -253,14 +253,3 @@ def mount(kubin):
             shutil.rmtree(temp_dir)
         except:
             pass
-
-
-# def frames2video(
-#     frames: np.ndarray, extension: str = "mp4", fps: int = 24, codec: str = "h264"
-# ) -> bytes:
-#     output = io.BytesIO()
-#     writer = iio.get_writer(output, extension, fps=fps, codec=codec)
-#     for frame in frames:
-#         writer.append_data(np.array(frame))
-#     writer.close()
-#     return output.getvalue()
