@@ -9,15 +9,6 @@ title = "Enhancer"
 enhancer_info = {"freeu": {}}
 
 
-def lora_state(lora_enabled, prior_path, decoder_path):
-    return {
-        "enabled": lora_enabled,
-        "prior": prior_path,
-        "decoder": decoder_path,
-        "binded": False,
-    }
-
-
 def setup(kubin):
     def on_hook(hook, **kwargs):
         if hook == kubin.params.HOOK.BEFORE_PREPARE_DECODER:
