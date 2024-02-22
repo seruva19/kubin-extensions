@@ -11,5 +11,5 @@
 }
 
 .kd-prompt-styles-selector .kd-styles-radiobutton-list label.selected {
-    background: var(--slider-color) !important;
+    background: initial;
 }
