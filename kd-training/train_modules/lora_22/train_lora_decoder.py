@@ -30,6 +30,7 @@ from diffusers.models.attention_processor import (
     LoRAAttnAddedKVProcessor,
 )
 from diffusers.loaders import AttnProcsLayers
+from train_modules.lora_22.lora_tools import rename_checkpoint
 
 if is_wandb_available():
     import wandb
@@ -463,16 +464,33 @@ def launch_lora_decoder_training(kubin, config, progress):
                             f"{config['decoder']['output_name']}-{global_step}",
                         )
 
-                        accelerator.save_state(save_path)
-                        logger.info(f"saved state to {save_path}")
+                        accelerator.save_state(
+                            save_path,
+                            safe_serialization=config["decoder"][
+                                "convert_to_safetensors"
+                            ],
+                        )
 
                         if config["decoder"]["convert_to_safetensors"]:
-                            pt_path = os.path.join(save_path, "pytorch_model.bin")
-                            sf_path = os.path.join(
-                                save_path,
-                                f"{config['decoder']['output_name']}-{global_step}.safetensors",
+                            rename_checkpoint(
+                                os.path.join(
+                                    save_path, accelerate.utils.SAFE_WEIGHTS_NAME
+                                ),
+                                os.path.join(
+                                    save_path,
+                                    f"{config['decoder']['output_name']}-{global_step}.safetensors",
+                                ),
                             )
-                            kubin.nn_utils.convert_pt_to_safetensors(pt_path, sf_path)
+                        else:
+                            rename_checkpoint(
+                                os.path.join(save_path, accelerate.utils.WEIGHTS_NAME),
+                                os.path.join(
+                                    save_path,
+                                    f"{config['decoder']['output_name']}-{global_step}.bin",
+                                ),
+                            )
+
+                        logger.info(f"saved state to {save_path}")
 
             logs = {
                 "step_loss": loss.detach().item(),

@@ -150,7 +150,9 @@ def get_T5encoder(
     tokens_length = {"t5": 128}
     context_dim = 4096
     model_dims = {"t5": 4096}
-    processor = T5TextConditionProcessor(tokens_length, model_names, cache_dir)
+    processor = T5TextConditionProcessor(
+        tokens_length=tokens_length, processor_names=model_names, cache_dir=cache_dir
+    )
     condition_encoders = T5TextConditionEncoder(
         model_names,
         context_dim,
@@ -167,12 +169,10 @@ def get_T5encoder(
     return processor, condition_encoders
 
 
-def get_T5processor(
-    weights_path: str,
-    cache_dir: str,
-) -> T5TextConditionProcessor:
+def get_T5processor(weights_path: str, cache_dir: str) -> T5TextConditionProcessor:
     model_names = {"t5": weights_path}
     tokens_length = {"t5": 128}
+
     processor = T5TextConditionProcessor(
         tokens_length, model_names, cache_dir=cache_dir
     )
@@ -200,10 +200,6 @@ def get_movq(
     }
     movq = MoVQ(generator_config)
     movq.load_state_dict(torch.load(weights_path))
-
-    # movq.eval().to(device)
-    # if fp16:
-    #     movq = movq.half()
 
     if fp8:
         movq = movq.eval().to(cast(torch.device, device), torch.float8_e4m3fn)

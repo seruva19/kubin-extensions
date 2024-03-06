@@ -1,1 +1,1 @@
-# https://github.com/ai-forever/diffusers/blob/main/examples/kandinsky2_2_train/tune_prior.py
+# Code adopted from https://github.com/huggingface/diffusers/blob/main/examples/kandinsky2_2/text_to_image/train_text_to_image_prior.py

@@ -54,15 +54,15 @@ def bind_lora(kubin, model_config, prior, decoder, params, task, loras):
 
             if not same_lora_prior_already_applied:
                 apply_lora_to_prior(kubin, lora_prior_path, prior)
-                params[
-                    "lora_prior"
-                ] = f"{os.path.basename(lora_prior_path)} [{calculate_file_hash(lora_prior_path)}]"
+                params["lora_prior"] = (
+                    f"{os.path.basename(lora_prior_path)} [{calculate_file_hash(lora_prior_path)}]"
+                )
 
             if not same_lora_decoder_already_applied:
                 apply_lora_to_decoder(kubin, lora_decoder_path, decoder)
-                params[
-                    "lora_decoder"
-                ] = f"{os.path.basename(lora_decoder_path)} [{calculate_file_hash(lora_decoder_path)}]"
+                params["lora_decoder"] = (
+                    f"{os.path.basename(lora_decoder_path)} [{calculate_file_hash(lora_decoder_path)}]"
+                )
 
             model_config[".lora"] = lora_prior_path, lora_decoder_path
 
@@ -144,6 +144,7 @@ def apply_lora_to_decoder(kubin, lora_decoder_path, decoder):
             hidden_size=hidden_size,
             cross_attention_dim=cross_attention_dim,
             rank=rank,
+            network_alpha=None,
         ).to(device)
 
     decoder.unet.set_attn_processor(lora_attn_procs)

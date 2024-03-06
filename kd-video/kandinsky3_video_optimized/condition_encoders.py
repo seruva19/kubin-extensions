@@ -17,7 +17,6 @@ from .utils import freeze
 
 
 class ConditionEncoder(nn.Module):
-
     def __init__(self, context_dim, model_dims):
         super().__init__()
         self.model_idx = {key: i for i, key in enumerate(model_dims.keys())}
@@ -67,7 +66,6 @@ class ConditionEncoder(nn.Module):
 
 
 class T5TextConditionEncoder(ConditionEncoder):
-
     def __init__(
         self,
         model_names,
