@@ -96,10 +96,13 @@ def setup(kubin):
             if vlm_model_id == "vikhyatk/moondream2":
                 revision = "2024-03-06"
                 vlm_model = AutoModelForCausalLM.from_pretrained(
-                    vlm_model_id, trust_remote_code=True, revision=revision
+                    vlm_model_id,
+                    trust_remote_code=True,
+                    revision=revision,
+                    cache_dir=cache_dir,
                 )
                 tokenizer = AutoTokenizer.from_pretrained(
-                    vlm_model_id, revision=revision
+                    vlm_model_id, revision=revision, cache_dir=cache_dir
                 )
 
                 def answer(image, model, tokenizer, prompt):
