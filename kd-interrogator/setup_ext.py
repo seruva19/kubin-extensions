@@ -3,6 +3,7 @@ from PIL import Image
 from clip_interrogator import Config, Interrogator
 from transformers import (
     AutoProcessor,
+    AutoTokenizer,
     AutoModelForCausalLM,
     BlipForConditionalGeneration,
     Blip2ForConditionalGeneration,
@@ -80,6 +81,51 @@ def setup(kubin):
 
         return ci
 
+    vlm_model = None
+    vlm_model_id = ""
+    vlm_model_fn = lambda _: "Cannot find relevant model"
+
+    def get_vlm_interrogator_fn(model_id, model_prompt):
+        nonlocal vlm_model
+        nonlocal vlm_model_id
+        nonlocal vlm_model_fn
+
+        if vlm_model is None or vlm_model_id != model_id:
+            print(f"initializing {model_id} for interrogation")
+            vlm_model_id = model_id
+            if vlm_model_id == "vikhyatk/moondream2":
+                revision = "2024-03-06"
+                vlm_model = AutoModelForCausalLM.from_pretrained(
+                    vlm_model_id, trust_remote_code=True, revision=revision
+                )
+                tokenizer = AutoTokenizer.from_pretrained(
+                    vlm_model_id, revision=revision
+                )
+
+                def answer(image, model, tokenizer, prompt):
+                    enc_image = model.encode_image(image)
+                    return model.answer_question(enc_image, prompt, tokenizer)
+
+                vlm_model_fn = lambda i: answer(
+                    image=i, model=vlm_model, tokenizer=tokenizer, prompt=model_prompt
+                )
+        return vlm_model_fn
+
+    def route_interrogate(
+        model_index,
+        image,
+        mode,
+        clip_model,
+        blip_type,
+        chunk_size,
+        vlm_model,
+        vlm_prompt,
+    ):
+        if model_index == 0:
+            return interrogate(image, mode, clip_model, blip_type, chunk_size)
+        elif model_index == 1:
+            return vlm_interrogate(image, vlm_model, vlm_prompt)
+
     def interrogate(image, mode, clip_model, blip_type, chunk_size):
         image = image.convert("RGB")
         interrogated_text = ""
@@ -101,7 +147,17 @@ def setup(kubin):
 
         return interrogated_text
 
+    def vlm_interrogate(image, model, prompt):
+        image = image.convert("RGB")
+        vlm_interrogator_fn = get_vlm_interrogator_fn(
+            model_id=model,
+            model_prompt=prompt,
+        )
+        interrogated_text = vlm_interrogator_fn(image)
+        return interrogated_text
+
     def batch_interrogate(
+        model_index,
         image_dir,
         batch_mode,
         image_extensions,
@@ -112,6 +168,8 @@ def setup(kubin):
         clip_model,
         blip_type,
         chunk_size,
+        vlm_model,
+        vlm_prompt,
         progress=gr.Progress(),
     ):
         if output_dir == "":
@@ -135,7 +193,10 @@ def setup(kubin):
             filepath = relevant_images[image_count][1]
 
             image = Image.open(filepath)
-            caption = interrogate(image, mode, clip_model, blip_type, chunk_size)
+            if model_index == 0:
+                caption = interrogate(image, mode, clip_model, blip_type, chunk_size)
+            elif model_index == 1:
+                caption = vlm_interrogate(image, vlm_model, vlm_prompt)
 
             if batch_mode == 0:
                 caption_filename = os.path.splitext(filename)[0]
@@ -163,28 +224,59 @@ def setup(kubin):
     def interrogator_ui(ui_shared, ui_tabs):
         with gr.Row() as interrogator_block:
             with gr.Column(scale=1) as interrogator_params_block:
-                with gr.Row():
-                    clip_model = gr.Dropdown(
-                        choices=["ViT-L-14/openai", "ViT-H-14/laion2b_s32b_b79k"],
-                        value="ViT-L-14/openai",
-                        label="CLIP model",
-                    )
-                with gr.Row():
-                    mode = gr.Radio(
-                        ["best", "classic", "fast", "negative"],
-                        value="fast",
-                        label="Mode",
-                    )
-                with gr.Row():
-                    blip_model_type = gr.Radio(
-                        ["blip-base", "blip-large", "git-large-coco"],
-                        value="blip-large",
-                        label="Caption model name",
-                    )
-                with gr.Row():
-                    chunk_size = gr.Slider(
-                        512, 2048, 2048, step=512, label="Chunk size"
-                    )
+                with gr.Tabs() as interrogator_panels:
+                    with gr.Tab("CLIP"):
+                        with gr.Row():
+                            clip_model = gr.Dropdown(
+                                choices=[
+                                    "ViT-L-14/openai",
+                                    "ViT-H-14/laion2b_s32b_b79k",
+                                ],
+                                value="ViT-L-14/openai",
+                                label="CLIP model",
+                            )
+                        with gr.Row():
+                            mode = gr.Radio(
+                                ["best", "classic", "fast", "negative"],
+                                value="fast",
+                                label="Mode",
+                            )
+                        with gr.Row():
+                            blip_model_type = gr.Radio(
+                                ["blip-base", "blip-large", "git-large-coco"],
+                                value="blip-large",
+                                label="Caption model name",
+                            )
+                        with gr.Row():
+                            chunk_size = gr.Slider(
+                                512, 2048, 2048, step=512, label="Chunk size"
+                            )
+                    with gr.Tab("VLM"):
+                        with gr.Row() as vlm_interrogator_block:
+                            with gr.Column(scale=1) as vlm_interrogator_params_block:
+                                with gr.Row():
+                                    vlm_model = gr.Dropdown(
+                                        choices=["vikhyatk/moondream2"],
+                                        value="vikhyatk/moondream2",
+                                        label="VLM name",
+                                    )
+                                with gr.Row():
+                                    vlm_prompt = gr.Textbox(
+                                        "Output the detailed description of this image.",
+                                        label="System prompt",
+                                        lines=3,
+                                        max_lines=3,
+                                    )
+
+                            vlm_interrogator_params_block.elem_classes = [
+                                "block-params"
+                            ]
+                model_index = gr.State(0)
+
+                def on_tabs_select(evt: gr.SelectData):
+                    return evt.index
+
+                interrogator_panels.select(on_tabs_select, None, model_index)
 
             with gr.Column(scale=1):
                 with gr.Tabs():
@@ -205,13 +297,16 @@ def setup(kubin):
 
                             kubin.ui_utils.click_and_disable(
                                 interrogate_btn,
-                                fn=interrogate,
+                                fn=route_interrogate,
                                 inputs=[
+                                    model_index,
                                     source_image,
                                     mode,
                                     clip_model,
                                     blip_model_type,
                                     chunk_size,
+                                    vlm_model,
+                                    vlm_prompt,
                                 ],
                                 outputs=[target_text],
                                 js=[
@@ -242,7 +337,9 @@ def setup(kubin):
                         )
 
                         caption_extension = gr.Textbox(
-                            ".txt", label="Caption files extension", visible=True
+                            ".txt",
+                            label="Caption files extension",
+                            visible=True,
                         )
                         output_csv = gr.Textbox(
                             value="captions.csv",
@@ -268,6 +365,7 @@ def setup(kubin):
                             batch_interrogate_btn,
                             fn=batch_interrogate,
                             inputs=[
+                                model_index,
                                 image_dir,
                                 caption_mode,
                                 image_types,
@@ -278,6 +376,8 @@ def setup(kubin):
                                 clip_model,
                                 blip_model_type,
                                 chunk_size,
+                                vlm_model,
+                                vlm_prompt,
                             ],
                             outputs=[progress],
                             js=[

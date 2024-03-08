@@ -1,3 +1,4 @@
 clip-interrogator==0.6.0
 open-clip-torch==2.18.0
-transformers==4.35.2
+timm==0.9.16
+einops==0.7.0
