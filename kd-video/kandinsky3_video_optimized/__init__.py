@@ -174,7 +174,7 @@ def get_T5processor(weights_path: str, cache_dir: str) -> T5TextConditionProcess
     tokens_length = {"t5": 128}
 
     processor = T5TextConditionProcessor(
-        tokens_length, model_names, cache_dir=cache_dir
+        tokens_length=tokens_length, processor_names=model_names, cache_dir=cache_dir
     )
 
     return processor

@@ -13,82 +13,209 @@ from torch import nn
 title = "Video"
 dir = Path(__file__).parent.absolute()
 
+from kandinsky_video31 import kdv11_create_video
+
 
 def setup(kubin):
     yaml_config = kubin.yaml_utils.YamlConfig(dir)
 
     def video_ui(ui_shared, ui_tabs):
-        with gr.Row() as video_block:
-            with gr.Column(scale=2) as video_params_block:
+        with gr.Tabs(selected=0) as video_block:
+            with gr.TabItem("Kandinsky Video 1.0", id=0):
                 with gr.Row():
-                    prompt = gr.TextArea(
-                        value="rolling waves on a sandy beach relaxation, rhythm, and coastal beauty, 4k photo",
-                        label="Prompt",
-                        lines=3,
-                    )
-                with gr.Row():
-                    negative_prompt = gr.TextArea(
-                        value="",
-                        label="Negative prompt",
-                        lines=3,
-                    )
-                with gr.Row():
-                    steps = gr.Slider(
-                        1,
-                        200,
-                        50,
-                        step=1,
-                        label="Steps",
-                    )
-                    guidance_scale = gr.Slider(1, 30, 5, step=1, label="Guidance scale")
-                    interpolation_guidance_scale = gr.Slider(
-                        0, 1, 0.25, step=0.1, label="Interpolation guidance scale"
-                    )
-                with gr.Row():
-                    width = gr.Number(value="512", step=8, label="Width")
-                    height = gr.Number(value="512", step=8, label="Height")
-                    pfps = gr.Dropdown(
-                        value="low", choices=["low", "medium", "high"], label="FPS"
-                    )
+                    with gr.Column(scale=2) as video_params_block:
+                        with gr.Row():
+                            prompt = gr.TextArea(
+                                value="rolling waves on a sandy beach relaxation, rhythm, and coastal beauty, 4k photo",
+                                label="Prompt",
+                                lines=3,
+                            )
+                        with gr.Row():
+                            negative_prompt = gr.TextArea(
+                                value="",
+                                label="Negative prompt",
+                                lines=3,
+                            )
+                        with gr.Row():
+                            steps = gr.Slider(
+                                1,
+                                200,
+                                50,
+                                step=1,
+                                label="Steps",
+                            )
+                            guidance_scale = gr.Slider(
+                                1, 30, 5, step=1, label="Guidance scale"
+                            )
+                            interpolation_guidance_scale = gr.Slider(
+                                0,
+                                1,
+                                0.25,
+                                step=0.1,
+                                label="Interpolation guidance scale",
+                            )
+                        with gr.Row():
+                            width = gr.Number(value="512", step=8, label="Width")
+                            height = gr.Number(value="512", step=8, label="Height")
+                            pfps = gr.Dropdown(
+                                value="low",
+                                choices=["low", "medium", "high"],
+                                label="FPS",
+                            )
 
-            with gr.Column(scale=1) as video_output_block:
-                create_video_btn = gr.Button("Create video", variant="primary")
-                video_output = gr.Video()
+                    with gr.Column(scale=1):
+                        create_video_btn = gr.Button("Create video", variant="primary")
+                        video_output = gr.Video()
 
-                kubin.ui_utils.click_and_disable(
-                    create_video_btn,
-                    fn=lambda *params: create_video(kubin, *params),
-                    inputs=[
-                        prompt,
-                        negative_prompt,
-                        width,
-                        height,
-                        pfps,
-                        steps,
-                        guidance_scale,
-                        interpolation_guidance_scale,
-                        gr.Textbox(
-                            value=kubin.params("general", "device"), visible=False
-                        ),
-                        gr.Textbox(
-                            value=kubin.params("general", "cache_dir"), visible=False
-                        ),
-                        gr.Textbox(
-                            value=kubin.params("general", "output_dir"), visible=False
-                        ),
-                        gr.Textbox(
-                            value=kubin.params("native", "text_encoder"), visible=False
-                        ),
-                        gr.State(yaml_config),
-                    ],
-                    outputs=video_output,
-                    js=[
-                        f"args => kubin.UI.taskStarted('{title}')",
-                        f"args => kubin.UI.taskFinished('{title}')",
-                    ],
-                )
+                        kubin.ui_utils.click_and_disable(
+                            create_video_btn,
+                            fn=lambda *params: create_video(kubin, *params),
+                            inputs=[
+                                prompt,
+                                negative_prompt,
+                                width,
+                                height,
+                                pfps,
+                                steps,
+                                guidance_scale,
+                                interpolation_guidance_scale,
+                                gr.Textbox(
+                                    value=kubin.params("general", "device"),
+                                    visible=False,
+                                ),
+                                gr.Textbox(
+                                    value=kubin.params("general", "cache_dir"),
+                                    visible=False,
+                                ),
+                                gr.Textbox(
+                                    value=kubin.params("general", "output_dir"),
+                                    visible=False,
+                                ),
+                                gr.Textbox(
+                                    value=kubin.params("native", "text_encoder"),
+                                    visible=False,
+                                ),
+                                gr.State(yaml_config),
+                            ],
+                            outputs=video_output,
+                            js=[
+                                f"args => kubin.UI.taskStarted('{title}')",
+                                f"args => kubin.UI.taskFinished('{title}')",
+                            ],
+                        )
 
-            video_params_block.elem_classes = ["block-params"]
+                    video_params_block.elem_classes = ["block-params"]
+
+            with gr.TabItem("Kandinsky Video 1.1", id=1):
+                with gr.Row():
+                    with gr.Column(scale=2) as kdv11_video_params_block:
+                        with gr.Row():
+                            with gr.Column():
+                                with gr.Row():
+                                    kdv11_prompt = gr.TextArea(
+                                        value="A cat wearing sunglasses and working as a lifeguard at a pool.",
+                                        label="Prompt",
+                                        lines=3,
+                                    )
+                                with gr.Row():
+                                    kdv11_negative_prompt = gr.TextArea(
+                                        value="",
+                                        label="Negative prompt",
+                                        lines=3,
+                                    )
+                            with gr.Column():
+                                with gr.Row():
+                                    kdv11_keyframe_image = gr.Image(
+                                        type="pil", label="Keyframe image"
+                                    )
+
+                        with gr.Row():
+                            kdv11_keyframe_guidance_scale = gr.Slider(
+                                1, 30, 5.0, step=0.1, label="Key frame guidance scale"
+                            )
+                            kdv11_guidance_weight_prompt = gr.Slider(
+                                1, 30, 5.0, step=0.1, label="Guidance weight prompt"
+                            )
+                            kdv11_guidance_weight_image = gr.Slider(
+                                1, 30, 3.0, step=0.1, label="Guidance weight image"
+                            )
+                        with gr.Row():
+                            kdv11_interpolation_guidance_scale = gr.Slider(
+                                0,
+                                1,
+                                0.5,
+                                step=0.1,
+                                label="Interpolation guidance scale",
+                            )
+                            kdv11_noise_augmentation = gr.Number(
+                                20, label="Interpolation guidance scale"
+                            )
+                            kdv11_fps = gr.Dropdown(
+                                value="medium",
+                                choices=["low", "medium", "high"],
+                                label="FPS",
+                            )
+
+                        with gr.Row():
+                            kdv11_width = gr.Number(value="512", step=8, label="Width")
+                            kdv11_height = gr.Number(
+                                value="512", step=8, label="Height"
+                            )
+
+                            kdv11_motion = gr.Dropdown(
+                                value="high",
+                                choices=["low", "medium", "high"],
+                                label="Motion",
+                            )
+
+                    with gr.Column(scale=1):
+                        kdv11_create_video_btn = gr.Button(
+                            "Create video", variant="primary"
+                        )
+                        kdv11_video_output = gr.Gallery()
+
+                        kubin.ui_utils.click_and_disable(
+                            kdv11_create_video_btn,
+                            fn=lambda *params: kdv11_create_video(kubin, *params),
+                            inputs=[
+                                kdv11_prompt,
+                                kdv11_negative_prompt,
+                                kdv11_width,
+                                kdv11_height,
+                                kdv11_fps,
+                                kdv11_motion,
+                                kdv11_keyframe_guidance_scale,
+                                kdv11_guidance_weight_prompt,
+                                kdv11_guidance_weight_image,
+                                kdv11_interpolation_guidance_scale,
+                                kdv11_noise_augmentation,
+                                kdv11_keyframe_image,
+                                gr.Textbox(
+                                    value=kubin.params("general", "device"),
+                                    visible=False,
+                                ),
+                                gr.Textbox(
+                                    value=kubin.params("general", "cache_dir"),
+                                    visible=False,
+                                ),
+                                gr.Textbox(
+                                    value=kubin.params("general", "output_dir"),
+                                    visible=False,
+                                ),
+                                gr.Textbox(
+                                    value=kubin.params("native", "text_encoder"),
+                                    visible=False,
+                                ),
+                                gr.State(yaml_config),
+                            ],
+                            outputs=kdv11_video_output,
+                            js=[
+                                f"args => kubin.UI.taskStarted('{title}')",
+                                f"args => kubin.UI.taskFinished('{title}')",
+                            ],
+                        )
+
+                    kdv11_video_params_block.elem_classes = ["block-params"]
         return video_block
 
     def settings_ui():
@@ -232,21 +359,50 @@ def patch_original_pipeline(kubin):
 
 
 def mount(kubin):
-    kdvideo_repo = "https://github.com/ai-forever/KandinskyVideo"
+    mount_kv_10(kubin)
+    mount_kv_11(kubin)
+
+
+def mount_kv_10(kubin):
+    kdvideo10_repo = "https://github.com/ai-forever/KandinskyVideo"
     commit = "4e10a23"
     destination_dir = "extensions/kd-video/video_kandinsky3"
 
     if not os.path.exists(destination_dir):
         current_path = os.getcwd()
         temp_dir = tempfile.mkdtemp()
-        temp_kdvideo = os.path.join(temp_dir, "temp_kdvideo")
+        temp_kdvideo10 = os.path.join(temp_dir, "temp_kdvideo10")
 
-        subprocess.run(["git", "clone", kdvideo_repo, temp_kdvideo, "-q"])
-        os.chdir(temp_kdvideo)
+        subprocess.run(["git", "clone", kdvideo10_repo, temp_kdvideo10, "-q"])
+        os.chdir(temp_kdvideo10)
         subprocess.run(["git", "checkout", commit, "-q"])
         os.chdir(current_path)
 
-        repo_path = os.path.join(temp_kdvideo, "video_kandinsky3")
+        repo_path = os.path.join(temp_kdvideo10, "video_kandinsky3")
+        if not os.path.exists(destination_dir):
+            shutil.copytree(repo_path, destination_dir)
+        try:
+            shutil.rmtree(temp_dir)
+        except:
+            pass
+
+
+def mount_kv_11(kubin):
+    kdvideo11_repo = "https://github.com/ai-forever/KandinskyVideo"
+    commit = "914eac1"
+    destination_dir = "extensions/kd-video/kandinsky_video"
+
+    if not os.path.exists(destination_dir):
+        current_path = os.getcwd()
+        temp_dir = tempfile.mkdtemp()
+        temp_kdvideo11 = os.path.join(temp_dir, "temp_kdvideo11")
+
+        subprocess.run(["git", "clone", kdvideo11_repo, temp_kdvideo11, "-q"])
+        os.chdir(temp_kdvideo11)
+        subprocess.run(["git", "checkout", commit, "-q"])
+        os.chdir(current_path)
+
+        repo_path = os.path.join(temp_kdvideo11, "kandinsky_video")
         if not os.path.exists(destination_dir):
             shutil.copytree(repo_path, destination_dir)
         try:
