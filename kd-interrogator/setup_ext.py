@@ -94,7 +94,7 @@ def setup(kubin):
             print(f"initializing {model_id} for interrogation")
             vlm_model_id = model_id
             if vlm_model_id == "vikhyatk/moondream2":
-                revision = "2024-03-06"
+                revision = "2024-05-20"
                 vlm_model = AutoModelForCausalLM.from_pretrained(
                     vlm_model_id,
                     trust_remote_code=True,
@@ -112,6 +112,45 @@ def setup(kubin):
                 vlm_model_fn = lambda i: answer(
                     image=i, model=vlm_model, tokenizer=tokenizer, prompt=model_prompt
                 )
+            elif vlm_model_id == "microsoft/Florence-2-large":
+                vision_model = AutoModelForCausalLM.from_pretrained(
+                    "microsoft/Florence-2-large",
+                    cache_dir=cache_dir,
+                    trust_remote_code=True,
+                )
+                processor = AutoProcessor.from_pretrained(
+                    "microsoft/Florence-2-large",
+                    cache_dir=cache_dir,
+                    trust_remote_code=True,
+                )
+
+                def answer(image, vision_model, processor, prompt):
+                    inputs = processor(text=prompt, images=image, return_tensors="pt")
+
+                    generated_ids = vision_model.generate(
+                        input_ids=inputs["input_ids"],
+                        pixel_values=inputs["pixel_values"],
+                        max_new_tokens=1024,
+                        early_stopping=False,
+                        num_beams=3,
+                        do_sample=False,
+                    )
+                    generated_text = processor.batch_decode(
+                        generated_ids, skip_special_tokens=False
+                    )[0]
+                    parsed_answer = processor.post_process_generation(
+                        generated_text,
+                        task=prompt,
+                        image_size=(image.width, image.height),
+                    )
+                    return parsed_answer
+
+                vlm_model_fn = lambda i: answer(
+                    image=i,
+                    vision_model=vision_model,
+                    processor=processor,
+                    prompt=model_prompt,
+                )[model_prompt]
         return vlm_model_fn
 
     def route_interrogate(
@@ -259,7 +298,10 @@ def setup(kubin):
                             with gr.Column(scale=1) as vlm_interrogator_params_block:
                                 with gr.Row():
                                     vlm_model = gr.Dropdown(
-                                        choices=["vikhyatk/moondream2"],
+                                        choices=[
+                                            "vikhyatk/moondream2",
+                                            "microsoft/Florence-2-large",
+                                        ],
                                         value="vikhyatk/moondream2",
                                         label="VLM name",
                                     )
@@ -271,6 +313,17 @@ def setup(kubin):
                                         max_lines=3,
                                     )
 
+                                def change_vlm_prompt(vlm_model):
+                                    if vlm_model == "vikhyatk/moondream2":
+                                        return "Output the detailed description of this image."
+                                    elif vlm_model == "microsoft/Florence-2-large":
+                                        return "<MORE_DETAILED_CAPTION>"
+
+                                vlm_model.change(
+                                    fn=change_vlm_prompt,
+                                    inputs=[vlm_model],
+                                    outputs=[vlm_prompt],
+                                )
                             vlm_interrogator_params_block.elem_classes = [
                                 "block-params"
                             ]
