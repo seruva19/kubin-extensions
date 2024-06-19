@@ -210,7 +210,11 @@ def generate_sc(
 
     imagepaths = []
     for image in decoder_output:
-        path = os.path.join(output_dir, f"sc-{uuid4()}.png")
+        folder_path = os.path.join(output_dir, "stable_cascade")
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        path = os.path.join(folder_path, f"sc-{uuid4()}.png")
         image.save(path)
         imagepaths.append(path)
 

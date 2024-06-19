@@ -184,7 +184,11 @@ def generate_pixart(
 
     imagepaths = []
     for image in images:
-        path = os.path.join(output_dir, f"pixart-{uuid4()}.png")
+        folder_path = os.path.join(output_dir, "pixart")
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        path = os.path.join(folder_path, f"pixart-{uuid4()}.png")
         image.save(path)
         imagepaths.append(path)
 
