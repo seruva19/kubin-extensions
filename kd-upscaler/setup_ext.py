@@ -1,3 +1,7 @@
+import os
+import shutil
+import subprocess
+import tempfile
 from upscale import upscale_with
 import gradio as gr
 from pathlib import Path
@@ -22,13 +26,50 @@ def setup(kubin):
 
                 with gr.Column() as upscale_selector:
                     upscaler = gr.Radio(
-                        ["Real-ESRGAN"], value="Real-ESRGAN", label="Upscaler"
+                        [
+                            "Default (Real-ESRGAN)",
+                            "KandiSuperRes",
+                            # "ESRGAN"
+                        ],
+                        value="Default (Real-ESRGAN)",
+                        label="Upscaler",
                     )
-                    scale = gr.Radio(
-                        ["2", "4", "8"],
-                        value="2",
-                        label="Upscale by",
-                        interactive=True,
+                    with gr.Row(visible=True) as default_upscaler_params:
+                        scale = gr.Radio(
+                            ["2", "4", "8"],
+                            value="2",
+                            label="Upscale by",
+                            interactive=True,
+                        )
+                    with gr.Row(visible=False) as kdsr_upscaler_params:
+                        kdsr_steps = gr.Slider(
+                            1,
+                            100,
+                            5,
+                            step=1,
+                            label="Steps",
+                            elem_classes=["inline-flex"],
+                        )
+                        kdsr_seed = gr.Number(-1, label="Seed", precision=0)
+                        kdsr_batch_size = gr.Slider(
+                            1,
+                            15,
+                            1,
+                            step=1,
+                            label="View batch size",
+                            elem_classes=["inline-flex"],
+                        )
+
+                    def on_method_select(upscaler_method):
+                        if upscaler_method == "Default (Real-ESRGAN)":
+                            return [gr.update(visible=True), gr.update(visible=False)]
+                        elif upscaler_method == "KandiSuperRes":
+                            return [gr.update(visible=False), gr.update(visible=True)]
+
+                    upscaler.change(
+                        fn=on_method_select,
+                        inputs=upscaler,
+                        outputs=[default_upscaler_params, kdsr_upscaler_params],
                     )
 
                 with gr.Row():
@@ -64,6 +105,9 @@ def setup(kubin):
                     ),
                     source_image,
                     clear_memory,
+                    kdsr_steps,
+                    kdsr_batch_size,
+                    kdsr_seed,
                 ],
                 outputs=upscale_output,
                 js=[
@@ -92,3 +136,29 @@ def setup(kubin):
         "tab_ui": lambda ui_s, ts: upscaler_ui(ui_s, ts),
         "send_target": source_image,
     }
+
+
+def mount(kubin):
+    import fileinput
+
+    kdsr_repo = "https://github.com/ai-forever/KandiSuperRes/"
+    commit = "32dc832"
+    destination_dir = "extensions/kd-upscaler/KandiSuperRes"
+
+    if not os.path.exists(destination_dir):
+        current_path = os.getcwd()
+        temp_dir = tempfile.mkdtemp()
+        temp_kdsr = os.path.join(temp_dir, "temp_kdsr")
+
+        subprocess.run(["git", "clone", kdsr_repo, temp_kdsr, "-q"])
+        os.chdir(temp_kdsr)
+        subprocess.run(["git", "checkout", commit, "-q"])
+        os.chdir(current_path)
+
+        repo_path = os.path.join(temp_kdsr, "KandiSuperRes")
+        if not os.path.exists(destination_dir):
+            shutil.copytree(repo_path, destination_dir)
+        try:
+            shutil.rmtree(temp_dir)
+        except:
+            pass
