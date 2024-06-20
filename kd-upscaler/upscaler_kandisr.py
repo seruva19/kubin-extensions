@@ -1,10 +1,11 @@
 from PIL import Image
-from KandiSuperRes import get_SR_pipeline
 
 sr_pipe = None
 
 
 def upscale_kdsr(device, cache_dir, input_image, steps, batch_size, seed):
+    from KandiSuperRes import get_SR_pipeline
+
     global sr_pipe
 
     if sr_pipe is None:
