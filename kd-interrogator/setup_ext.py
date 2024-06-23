@@ -14,6 +14,18 @@ import os
 
 title = "Interrogator"
 
+# adopted from https://github.com/kijai/ComfyUI-Florence2/blob/main/nodes.py
+from unittest.mock import patch
+from transformers.dynamic_module_utils import get_imports
+
+
+def fixed_get_imports(filename: str | os.PathLike) -> list[str]:
+    if not str(filename).endswith("modeling_florence2.py"):
+        return get_imports(filename)
+    imports = get_imports(filename)
+    imports.remove("flash_attn")
+    return imports
+
 
 def setup(kubin):
     cache_dir = kubin.params("general", "cache_dir")
@@ -113,11 +125,14 @@ def setup(kubin):
                     image=i, model=vlm_model, tokenizer=tokenizer, prompt=model_prompt
                 )
             elif vlm_model_id == "microsoft/Florence-2-large":
-                vision_model = AutoModelForCausalLM.from_pretrained(
-                    "microsoft/Florence-2-large",
-                    cache_dir=cache_dir,
-                    trust_remote_code=True,
-                )
+                with patch(
+                    "transformers.dynamic_module_utils.get_imports", fixed_get_imports
+                ):
+                    vision_model = AutoModelForCausalLM.from_pretrained(
+                        "microsoft/Florence-2-large",
+                        cache_dir=cache_dir,
+                        trust_remote_code=True,
+                    )
                 processor = AutoProcessor.from_pretrained(
                     "microsoft/Florence-2-large",
                     cache_dir=cache_dir,
