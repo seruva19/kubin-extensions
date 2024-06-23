@@ -14,7 +14,6 @@ import os
 
 title = "Interrogator"
 
-# adopted from https://github.com/kijai/ComfyUI-Florence2/blob/main/nodes.py
 from unittest.mock import patch
 from transformers.dynamic_module_utils import get_imports
 
