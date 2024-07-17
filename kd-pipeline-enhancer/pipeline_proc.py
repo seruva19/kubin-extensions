@@ -4,11 +4,12 @@ from diffusers.models.unet_2d_condition import UNet2DConditionModel
 
 
 def set_params(kubin, params, decoder, model, enhancer_info):
-    task = params.get(".ui-task", "none")
-    model_config = model.config
-    unet = decoder.unet
+    if hasattr(decoder, "unet"):
+        task = params.get(".ui-task", "none")
+        model_config = model.config
+        unet = decoder.unet
 
-    tune_freeu(kubin, model_config, unet, params, task, enhancer_info["freeu"])
+        tune_freeu(kubin, model_config, unet, params, task, enhancer_info["freeu"])
 
 
 def tune_freeu(kubin, model_config, unet, params, task, freeu):

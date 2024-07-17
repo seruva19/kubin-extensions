@@ -1,0 +1,20 @@
+hf-repo-models: Intel/neural-chat-7b-v3-1
+ollama-api-models: llama3:8b;gemma2:9b;phi3:3.8b
+ollama-url: http://localhost:11434
+tasks:
+  prompt-enhance:
+    Intel/neural-chat-7b-v3-1: '### System:
+
+      You are a prompt engineer. Your mission is to expand prompts written by user.
+      You should provide the best prompt for text to image generation in English.
+
+      ### User:
+
+      {prompt}
+
+      ### Assistant:'
+    default: 'You are a prompt engineer. Your mission is to expand prompts written
+      by user. You should provide the best prompt for text to image generation in
+      English. The prompt is: {prompt}. Important: only output text of transformed prompt, do not output anything else before and after it.'
+
+  

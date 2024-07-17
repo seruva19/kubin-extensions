@@ -108,7 +108,9 @@ def get_movq(
     state_dict = torch.load(weights_path, map_location=torch.device("cpu"))
     movq.load_state_dict(state_dict)
 
+    # movq = movq.eval().to(device)
     movq = movq.eval().to(cast(torch.device, device), torch.float8_e4m3fn)
+
     return movq
 
 
@@ -127,6 +129,7 @@ def get_video_movq(
     state_dict = torch.load(weights_path, map_location=torch.device("cpu"))
     video_movq.load_state_dict(state_dict)
 
+    # video_movq = video_movq.eval().to(device)
     video_movq = video_movq.eval().to(cast(torch.device, device), torch.float8_e4m3fn)
     return video_movq
 
