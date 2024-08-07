@@ -1,14 +1,7 @@
-import shutil
-import subprocess
-import tempfile
 from uuid import uuid4
 import gradio as gr
 import os
 from pathlib import Path
-import torch
-from diffusers import FluxTransformer2DModel, FluxPipeline
-from transformers import T5EncoderModel, CLIPTextModel
-from optimum.quanto import freeze, qfloat8, quantize
 
 
 title = "BFL Flux"
@@ -69,7 +62,7 @@ def setup(kubin):
 
                 def on_model_change(model):
                     return [
-                        gr.update(value=4 if model == "flux-dev" else 50),
+                        gr.update(value=50 if model == "flux-dev" else 4),
                         gr.update(interactive=model == "flux-dev"),
                     ]
 
@@ -208,27 +201,3 @@ def flush_flux(flux_model, kubin):
     from flux_inference import flush
 
     flush(flux_model, kubin)
-
-
-# def mount(kubin):
-#     flux_repo = "https://github.com/black-forest-labs/flux"
-#     commit = "eae154e"
-#     destination_dir = "extensions/kd-flux/flux"
-
-#     if not os.path.exists(destination_dir):
-#         current_path = os.getcwd()
-#         temp_dir = tempfile.mkdtemp()
-#         temp_flux = os.path.join(temp_dir, "temp_flux")
-
-#         subprocess.run(["git", "clone", flux_repo, temp_flux, "-q"])
-#         os.chdir(temp_flux)
-#         subprocess.run(["git", "checkout", commit, "-q"])
-#         os.chdir(current_path)
-
-#         repo_path = os.path.join(temp_flux, "src", "flux")
-#         if not os.path.exists(destination_dir):
-#             shutil.copytree(repo_path, destination_dir)
-#         try:
-#             shutil.rmtree(temp_dir)
-#         except:
-#             pass
