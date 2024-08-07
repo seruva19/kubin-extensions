@@ -1,6 +1,6 @@
 import torch
 import os
-from diffusers.models.unet_2d_condition import UNet2DConditionModel
+from diffusers import UNet2DConditionModel
 
 
 def set_params(kubin, params, decoder, model, enhancer_info):
