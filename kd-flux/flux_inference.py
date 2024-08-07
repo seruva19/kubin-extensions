@@ -2,14 +2,9 @@ import gc
 import os
 
 import torch
-from einops import rearrange
-from PIL import ExifTags, Image
-from torchvision import transforms
-from transformers import pipeline
 import torch
 from diffusers import FluxTransformer2DModel, FluxPipeline
-from transformers import T5EncoderModel, CLIPTextModel
-from optimum.quanto import freeze, qfloat8, quantize
+from transformers import T5EncoderModel
 
 
 def peek_hf_key():
@@ -28,6 +23,8 @@ def get_models(
     offload: bool,
     use_hf_key: bool,
 ):
+    from optimum.quanto import freeze, qfloat8, quantize
+
     if use_hf_key:
         peek_hf_key()
 

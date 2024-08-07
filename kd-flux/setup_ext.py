@@ -31,14 +31,14 @@ def setup(kubin):
                     width = gr.Slider(
                         128,
                         1360,
-                        1360,
+                        2048,
                         step=16,
                         label="Width",
                     )
                     height = gr.Slider(
                         128,
                         768,
-                        768,
+                        2048,
                         step=16,
                         label="Height",
                     )
