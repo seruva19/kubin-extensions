@@ -249,6 +249,8 @@ def setup(kubin):
         chunk_size,
         vlm_model,
         vlm_prompt,
+        prepended_txt,
+        appended_txt,
         progress=gr.Progress(),
     ):
         if output_dir == "":
@@ -273,9 +275,19 @@ def setup(kubin):
 
             image = Image.open(filepath)
             if model_index == 0:
-                caption = interrogate(image, mode, clip_model, blip_type, chunk_size)
+                caption = interrogate(
+                    image,
+                    mode,
+                    clip_model,
+                    blip_type,
+                    chunk_size,
+                    prepended_txt,
+                    appended_txt,
+                )
             elif model_index == 1:
-                caption = vlm_interrogate(image, vlm_model, vlm_prompt)
+                caption = vlm_interrogate(
+                    image, vlm_model, vlm_prompt, prepended_txt, appended_txt
+                )
 
             if batch_mode == 0:
                 caption_filename = os.path.splitext(filename)[0]
@@ -487,6 +499,8 @@ def setup(kubin):
                                 chunk_size,
                                 vlm_model,
                                 vlm_prompt,
+                                prepend_text,
+                                append_text,
                             ],
                             outputs=[progress],
                             js=[
