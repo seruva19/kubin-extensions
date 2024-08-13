@@ -127,19 +127,25 @@ def setup(kubin):
                 with patch(
                     "transformers.dynamic_module_utils.get_imports", fixed_get_imports
                 ):
-                    vision_model = AutoModelForCausalLM.from_pretrained(
+                    device = "cuda"
+                    dtype = torch.float16 if device == "cuda" else torch.float32
+                    vlm_model = AutoModelForCausalLM.from_pretrained(
+                        "microsoft/Florence-2-large",
+                        cache_dir=cache_dir,
+                        torch_dtype=dtype,
+                        trust_remote_code=True,
+                    ).to(device)
+
+                    processor = AutoProcessor.from_pretrained(
                         "microsoft/Florence-2-large",
                         cache_dir=cache_dir,
                         trust_remote_code=True,
                     )
-                processor = AutoProcessor.from_pretrained(
-                    "microsoft/Florence-2-large",
-                    cache_dir=cache_dir,
-                    trust_remote_code=True,
-                )
 
                 def answer(image, vision_model, processor, prompt):
-                    inputs = processor(text=prompt, images=image, return_tensors="pt")
+                    inputs = processor(
+                        text=prompt, images=image, return_tensors="pt"
+                    ).to(device, dtype)
 
                     generated_ids = vision_model.generate(
                         input_ids=inputs["input_ids"],
@@ -161,7 +167,7 @@ def setup(kubin):
 
                 vlm_model_fn = lambda i: answer(
                     image=i,
-                    vision_model=vision_model,
+                    vision_model=vlm_model,
                     processor=processor,
                     prompt=model_prompt,
                 )[model_prompt]
