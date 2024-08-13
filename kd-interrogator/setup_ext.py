@@ -176,13 +176,27 @@ def setup(kubin):
         chunk_size,
         vlm_model,
         vlm_prompt,
+        prepended_txt,
+        appended_txt,
     ):
         if model_index == 0:
-            return interrogate(image, mode, clip_model, blip_type, chunk_size)
+            return interrogate(
+                image,
+                mode,
+                clip_model,
+                blip_type,
+                chunk_size,
+                prepended_txt,
+                appended_txt,
+            )
         elif model_index == 1:
-            return vlm_interrogate(image, vlm_model, vlm_prompt)
+            return vlm_interrogate(
+                image, vlm_model, vlm_prompt, prepended_txt, appended_txt
+            )
 
-    def interrogate(image, mode, clip_model, blip_type, chunk_size):
+    def interrogate(
+        image, mode, clip_model, blip_type, chunk_size, prepended_txt, appended_txt
+    ):
         image = image.convert("RGB")
         interrogated_text = ""
 
@@ -201,16 +215,16 @@ def setup(kubin):
         elif mode == "negative":
             interrogated_text = interrogator.interrogate_negative(image)
 
-        return interrogated_text
+        return prepended_txt + interrogated_text + appended_txt
 
-    def vlm_interrogate(image, model, prompt):
+    def vlm_interrogate(image, model, prompt, prepended_txt, appended_txt):
         image = image.convert("RGB")
         vlm_interrogator_fn = get_vlm_interrogator_fn(
             model_id=model,
             model_prompt=prompt,
         )
         interrogated_text = vlm_interrogator_fn(image)
-        return interrogated_text
+        return prepended_txt + interrogated_text + appended_txt
 
     def batch_interrogate(
         model_index,
@@ -348,6 +362,20 @@ def setup(kubin):
 
                 interrogator_panels.select(on_tabs_select, None, model_index)
 
+                with gr.Row() as extra_params_block:
+                    prepend_text = gr.Textbox(
+                        "",
+                        label="Text to prepend caption with",
+                        lines=2,
+                        max_lines=2,
+                    )
+                    append_text = gr.Textbox(
+                        "",
+                        label="Text to append to caption",
+                        lines=2,
+                        max_lines=2,
+                    )
+
             with gr.Column(scale=1):
                 with gr.Tabs():
                     with gr.TabItem("Single image"):
@@ -377,6 +405,8 @@ def setup(kubin):
                                     chunk_size,
                                     vlm_model,
                                     vlm_prompt,
+                                    prepend_text,
+                                    append_text,
                                 ],
                                 outputs=[target_text],
                                 js=[
