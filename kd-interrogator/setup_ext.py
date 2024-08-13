@@ -101,17 +101,22 @@ def setup(kubin):
         nonlocal vlm_model_id
         nonlocal vlm_model_fn
 
+        device = "cuda"
+        dtype = torch.float16 if device == "cuda" else torch.float32
+
         if vlm_model is None or vlm_model_id != model_id:
             print(f"initializing {model_id} for interrogation")
             vlm_model_id = model_id
+
             if vlm_model_id == "vikhyatk/moondream2":
-                revision = "2024-05-20"
+                revision = "2024-07-23"
                 vlm_model = AutoModelForCausalLM.from_pretrained(
                     vlm_model_id,
                     trust_remote_code=True,
                     revision=revision,
                     cache_dir=cache_dir,
-                )
+                ).to(device)
+
                 tokenizer = AutoTokenizer.from_pretrained(
                     vlm_model_id, revision=revision, cache_dir=cache_dir
                 )
@@ -127,8 +132,6 @@ def setup(kubin):
                 with patch(
                     "transformers.dynamic_module_utils.get_imports", fixed_get_imports
                 ):
-                    device = "cuda"
-                    dtype = torch.float16 if device == "cuda" else torch.float32
                     vlm_model = AutoModelForCausalLM.from_pretrained(
                         "microsoft/Florence-2-large",
                         cache_dir=cache_dir,
