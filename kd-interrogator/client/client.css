@@ -1,0 +1,8 @@
+.batch-interrogation-progress .wrap {
+    overflow: visible;
+}
+
+.batch-interrogation-progress .progress-text {
+    width: 100%;
+    margin-top: 30px;
+}

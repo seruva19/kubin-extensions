@@ -11,6 +11,7 @@ from transformers import (
 import pandas as pd
 import torch
 import os
+from models.joy_caption import JoyCaptionInterrogatorModel
 
 title = "Interrogator"
 
@@ -128,6 +129,7 @@ def setup(kubin):
                 vlm_model_fn = lambda i: answer(
                     image=i, model=vlm_model, tokenizer=tokenizer, prompt=model_prompt
                 )
+
             elif vlm_model_id == "microsoft/Florence-2-large":
                 with patch(
                     "transformers.dynamic_module_utils.get_imports", fixed_get_imports
@@ -174,6 +176,13 @@ def setup(kubin):
                     processor=processor,
                     prompt=model_prompt,
                 )[model_prompt]
+
+            elif vlm_model_id == "fancyfeast/joy-caption-pre-alpha":
+                vlm_model = JoyCaptionInterrogatorModel()
+                vlm_model.load_components(cache_dir, device)
+
+                vlm_model_fn = lambda i: vlm_model.get_caption(i, model_prompt)
+
         return vlm_model_fn
 
     def route_interrogate(
@@ -350,6 +359,9 @@ def setup(kubin):
                                         choices=[
                                             "vikhyatk/moondream2",
                                             "microsoft/Florence-2-large",
+                                            # "THUDM/cogvlm2-llama3-chat-19B",
+                                            # "internlm/internlm-xcomposer2-4khd-7b",
+                                            "fancyfeast/joy-caption-pre-alpha",
                                         ],
                                         value="vikhyatk/moondream2",
                                         label="VLM name",
@@ -367,6 +379,10 @@ def setup(kubin):
                                         return "Output the detailed description of this image."
                                     elif vlm_model == "microsoft/Florence-2-large":
                                         return "<MORE_DETAILED_CAPTION>"
+                                    elif (
+                                        vlm_model == "fancyfeast/joy-caption-pre-alpha"
+                                    ):
+                                        return "A descriptive caption for this image:\n"
 
                                 vlm_model.change(
                                     fn=change_vlm_prompt,
@@ -480,7 +496,10 @@ def setup(kubin):
                         batch_interrogate_btn = gr.Button(
                             "Interrogate", variant="primary"
                         )
-                        progress = gr.HTML(label="Interrogation progress")
+                        progress = gr.HTML(
+                            label="Interrogation progress",
+                            elem_classes=["batch-interrogation-progress"],
+                        )
 
                         kubin.ui_utils.click_and_disable(
                             batch_interrogate_btn,

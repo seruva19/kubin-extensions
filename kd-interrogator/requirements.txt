@@ -2,3 +2,4 @@ clip-interrogator==0.6.0
 open-clip-torch==2.18.0
 timm==0.9.16
 einops==0.7.0
+bitsandbytes==0.43.3
