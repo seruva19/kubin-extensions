@@ -97,7 +97,7 @@ def setup(kubin):
     vlm_model_id = ""
     vlm_model_fn = lambda _: "Cannot find relevant model"
 
-    def get_vlm_interrogator_fn(model_id, model_prompt):
+    def get_vlm_interrogator_fn(model_id):
         nonlocal vlm_model
         nonlocal vlm_model_id
         nonlocal vlm_model_fn
@@ -126,8 +126,8 @@ def setup(kubin):
                     enc_image = model.encode_image(image)
                     return model.answer_question(enc_image, prompt, tokenizer)
 
-                vlm_model_fn = lambda i: answer(
-                    image=i, model=vlm_model, tokenizer=tokenizer, prompt=model_prompt
+                vlm_model_fn = lambda i, p: answer(
+                    image=i, model=vlm_model, tokenizer=tokenizer, prompt=p
                 )
 
             elif vlm_model_id == "microsoft/Florence-2-large":
@@ -170,18 +170,18 @@ def setup(kubin):
                     )
                     return parsed_answer
 
-                vlm_model_fn = lambda i: answer(
+                vlm_model_fn = lambda i, p: answer(
                     image=i,
                     vision_model=vlm_model,
                     processor=processor,
-                    prompt=model_prompt,
-                )[model_prompt]
+                    prompt=p,
+                )[p]
 
             elif vlm_model_id == "fancyfeast/joy-caption-pre-alpha":
                 vlm_model = JoyCaptionInterrogatorModel()
                 vlm_model.load_components(cache_dir, device)
 
-                vlm_model_fn = lambda i: vlm_model.get_caption(i, model_prompt)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
         return vlm_model_fn
 
@@ -237,11 +237,8 @@ def setup(kubin):
 
     def vlm_interrogate(image, model, prompt, prepended_txt, appended_txt):
         image = image.convert("RGB")
-        vlm_interrogator_fn = get_vlm_interrogator_fn(
-            model_id=model,
-            model_prompt=prompt,
-        )
-        interrogated_text = vlm_interrogator_fn(image)
+        vlm_interrogator_fn = get_vlm_interrogator_fn(model_id=model)
+        interrogated_text = vlm_interrogator_fn(image, prompt)
         return prepended_txt + interrogated_text + appended_txt
 
     def batch_interrogate(
@@ -478,6 +475,7 @@ def setup(kubin):
                             label="Caption files extension",
                             visible=True,
                         )
+
                         output_csv = gr.Textbox(
                             value="captions.csv",
                             label="Name of csv file",
