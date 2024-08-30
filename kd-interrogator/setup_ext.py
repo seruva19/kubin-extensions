@@ -12,6 +12,7 @@ import pandas as pd
 import torch
 import os
 from models.joy_caption import JoyCaptionInterrogatorModel
+from models.cogvlm2 import CogVLM2Model
 
 title = "Interrogator"
 
@@ -31,11 +32,11 @@ def setup(kubin):
     cache_dir = kubin.params("general", "cache_dir")
 
     CAPTION_MODELS = {
-        "blip-base": "Salesforce/blip-image-captioning-base",  # 990MB
-        "blip-large": "Salesforce/blip-image-captioning-large",  # 1.9GB
-        "blip2-2.7b": "Salesforce/blip2-opt-2.7b",  # 15.5GB
-        "blip2-flan-t5-xl": "Salesforce/blip2-flan-t5-xl",  # 15.77GB
-        "git-large-coco": "microsoft/git-large-coco",  # 1.58GB
+        "blip-base": "Salesforce/blip-image-captioning-base",
+        "blip-large": "Salesforce/blip-image-captioning-large",
+        "blip2-2.7b": "Salesforce/blip2-opt-2.7b",
+        "blip2-flan-t5-xl": "Salesforce/blip2-flan-t5-xl",
+        "git-large-coco": "microsoft/git-large-coco",
     }
 
     def patched_load_caption_model(self):
@@ -97,7 +98,7 @@ def setup(kubin):
     vlm_model_id = ""
     vlm_model_fn = lambda _: "Cannot find relevant model"
 
-    def get_vlm_interrogator_fn(model_id):
+    def get_vlm_interrogator_fn(model_id, quantization):
         nonlocal vlm_model
         nonlocal vlm_model_id
         nonlocal vlm_model_fn
@@ -183,6 +184,12 @@ def setup(kubin):
 
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
+            elif vlm_model_id == "THUDM/cogvlm2-llama3-chat-19B":
+                vlm_model = CogVLM2Model()
+                vlm_model.load_model(cache_dir, device, quantization)
+
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
         return vlm_model_fn
 
     def route_interrogate(
@@ -196,6 +203,7 @@ def setup(kubin):
         vlm_prompt,
         prepended_txt,
         appended_txt,
+        quantization,
     ):
         if model_index == 0:
             return interrogate(
@@ -209,7 +217,7 @@ def setup(kubin):
             )
         elif model_index == 1:
             return vlm_interrogate(
-                image, vlm_model, vlm_prompt, prepended_txt, appended_txt
+                image, vlm_model, vlm_prompt, prepended_txt, appended_txt, quantization
             )
 
     def interrogate(
@@ -235,9 +243,13 @@ def setup(kubin):
 
         return prepended_txt + interrogated_text + appended_txt
 
-    def vlm_interrogate(image, model, prompt, prepended_txt, appended_txt):
+    def vlm_interrogate(
+        image, model, prompt, prepended_txt, appended_txt, quantization
+    ):
         image = image.convert("RGB")
-        vlm_interrogator_fn = get_vlm_interrogator_fn(model_id=model)
+        vlm_interrogator_fn = get_vlm_interrogator_fn(
+            model_id=model, quantization=quantization
+        )
         interrogated_text = vlm_interrogator_fn(image, prompt)
         return prepended_txt + interrogated_text + appended_txt
 
@@ -356,7 +368,7 @@ def setup(kubin):
                                         choices=[
                                             "vikhyatk/moondream2",
                                             "microsoft/Florence-2-large",
-                                            # "THUDM/cogvlm2-llama3-chat-19B",
+                                            "THUDM/cogvlm2-llama3-chat-19B",
                                             # "internlm/internlm-xcomposer2-4khd-7b",
                                             "fancyfeast/joy-caption-pre-alpha",
                                         ],
@@ -371,15 +383,41 @@ def setup(kubin):
                                         max_lines=3,
                                     )
 
+                                with gr.Row() as additional_params:
+                                    quantization = gr.Dropdown(
+                                        value="4bit",
+                                        choices=["None", "8bit", "4bit"],
+                                        label="Quantization",
+                                        scale=1,
+                                    )
+                                    batch_size = gr.Number(
+                                        value=1,
+                                        minimum=1,
+                                        maximum=128,
+                                        step=1,
+                                        label="Batch size",
+                                        interactive=False,
+                                        scale=1,
+                                    )
+
                                 def change_vlm_prompt(vlm_model):
+                                    prompt = (
+                                        "Describe this image as detailed as possible."
+                                    )
                                     if vlm_model == "vikhyatk/moondream2":
-                                        return "Output the detailed description of this image."
+                                        prompt = "Output the detailed description of this image."
                                     elif vlm_model == "microsoft/Florence-2-large":
-                                        return "<MORE_DETAILED_CAPTION>"
+                                        prompt = "<MORE_DETAILED_CAPTION>"
+                                    elif vlm_model == "THUDM/cogvlm2-llama3-chat-19B":
+                                        prompt = "Describe the image."
                                     elif (
                                         vlm_model == "fancyfeast/joy-caption-pre-alpha"
                                     ):
-                                        return "A descriptive caption for this image:\n"
+                                        prompt = (
+                                            "A descriptive caption for this image:\n"
+                                        )
+
+                                    return prompt
 
                                 vlm_model.change(
                                     fn=change_vlm_prompt,
@@ -441,6 +479,7 @@ def setup(kubin):
                                     vlm_prompt,
                                     prepend_text,
                                     append_text,
+                                    quantization,
                                 ],
                                 outputs=[target_text],
                                 js=[
