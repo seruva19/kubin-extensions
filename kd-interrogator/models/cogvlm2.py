@@ -7,10 +7,6 @@ import torch
 import torch.amp.autocast_mode
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-from transformers import (
-    AutoTokenizer,
-    AutoModelForCausalLM,
-)
 
 MODEL_PATH = "THUDM/cogvlm2-llama3-chat-19B"
 

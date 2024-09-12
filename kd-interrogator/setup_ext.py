@@ -13,6 +13,8 @@ import torch
 import os
 from models.joy_caption import JoyCaptionInterrogatorModel
 from models.cogvlm2 import CogVLM2Model
+from models.internlm_xc2_4khd import InternLM2Model
+from models.qwen2_vl import Qwen2VLModel
 
 title = "Interrogator"
 
@@ -181,13 +183,21 @@ def setup(kubin):
             elif vlm_model_id == "fancyfeast/joy-caption-pre-alpha":
                 vlm_model = JoyCaptionInterrogatorModel()
                 vlm_model.load_components(cache_dir, device)
-
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "THUDM/cogvlm2-llama3-chat-19B":
                 vlm_model = CogVLM2Model()
                 vlm_model.load_model(cache_dir, device, quantization)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
+            elif vlm_model_id == "internlm/internlm-xcomposer2-4khd-7b":
+                vlm_model = InternLM2Model()
+                vlm_model.load_model(cache_dir, device)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
+            elif vlm_model_id == "Qwen/Qwen2-VL-7B-Instruct":
+                vlm_model = Qwen2VLModel()
+                vlm_model.load_model(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
         return vlm_model_fn
@@ -269,6 +279,7 @@ def setup(kubin):
         vlm_prompt,
         prepended_txt,
         appended_txt,
+        quantization,
         progress=gr.Progress(),
     ):
         if output_dir == "":
@@ -304,7 +315,12 @@ def setup(kubin):
                 )
             elif model_index == 1:
                 caption = vlm_interrogate(
-                    image, vlm_model, vlm_prompt, prepended_txt, appended_txt
+                    image,
+                    vlm_model,
+                    vlm_prompt,
+                    prepended_txt,
+                    appended_txt,
+                    quantization,
                 )
 
             if batch_mode == 0:
@@ -369,7 +385,8 @@ def setup(kubin):
                                             "vikhyatk/moondream2",
                                             "microsoft/Florence-2-large",
                                             "THUDM/cogvlm2-llama3-chat-19B",
-                                            # "internlm/internlm-xcomposer2-4khd-7b",
+                                            "internlm/internlm-xcomposer2-4khd-7b",
+                                            "Qwen/Qwen2-VL-7B-Instruct",
                                             "fancyfeast/joy-caption-pre-alpha",
                                         ],
                                         value="vikhyatk/moondream2",
@@ -410,6 +427,13 @@ def setup(kubin):
                                         prompt = "<MORE_DETAILED_CAPTION>"
                                     elif vlm_model == "THUDM/cogvlm2-llama3-chat-19B":
                                         prompt = "Describe the image."
+                                    elif (
+                                        vlm_model
+                                        == "internlm/internlm-xcomposer2-4khd-7b"
+                                    ):
+                                        prompt = "<ImageHere>Please describe this image in detail."
+                                    elif vlm_model == "Qwen/Qwen2-VL-7B-Instruct":
+                                        prompt = "Describe this image as detailed as possible, even the slightest details should be preserved."
                                     elif (
                                         vlm_model == "fancyfeast/joy-caption-pre-alpha"
                                     ):
@@ -557,6 +581,7 @@ def setup(kubin):
                                 vlm_prompt,
                                 prepend_text,
                                 append_text,
+                                quantization,
                             ],
                             outputs=[progress],
                             js=[
