@@ -38,6 +38,7 @@ class Qwen2VLModel:
             self.processor = AutoProcessor.from_pretrained(
                 "Qwen/Qwen2-VL-7B-Instruct", cache_dir=cache_dir
             )
+            self.initialized = True
 
     def get_caption(
         self,

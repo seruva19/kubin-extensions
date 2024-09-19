@@ -134,21 +134,18 @@ def setup(kubin):
                 )
 
             elif vlm_model_id == "microsoft/Florence-2-large":
-                with patch(
-                    "transformers.dynamic_module_utils.get_imports", fixed_get_imports
-                ):
-                    vlm_model = AutoModelForCausalLM.from_pretrained(
-                        "microsoft/Florence-2-large",
-                        cache_dir=cache_dir,
-                        torch_dtype=dtype,
-                        trust_remote_code=True,
-                    ).to(device)
+                vlm_model = AutoModelForCausalLM.from_pretrained(
+                    "microsoft/Florence-2-large",
+                    cache_dir=cache_dir,
+                    torch_dtype=dtype,
+                    trust_remote_code=True,
+                ).to(device)
 
-                    processor = AutoProcessor.from_pretrained(
-                        "microsoft/Florence-2-large",
-                        cache_dir=cache_dir,
-                        trust_remote_code=True,
-                    )
+                processor = AutoProcessor.from_pretrained(
+                    "microsoft/Florence-2-large",
+                    cache_dir=cache_dir,
+                    trust_remote_code=True,
+                )
 
                 def answer(image, vision_model, processor, prompt):
                     inputs = processor(
@@ -192,7 +189,7 @@ def setup(kubin):
 
             elif vlm_model_id == "internlm/internlm-xcomposer2-4khd-7b":
                 vlm_model = InternLM2Model()
-                vlm_model.load_model(cache_dir, device)
+                vlm_model.load_model(cache_dir, device, quantization)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "Qwen/Qwen2-VL-7B-Instruct":

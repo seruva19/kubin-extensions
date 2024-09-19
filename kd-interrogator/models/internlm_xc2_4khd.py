@@ -2,9 +2,15 @@ import numpy as np
 import torch
 import torch.amp.autocast_mode
 import torch
-from transformers import AutoModel, AutoTokenizer
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    AutoModel,
+)
 from PIL import Image
 from torchvision import transforms
+from optimum.quanto import QuantizedModelForCausalLM, qint4, qint8
 
 MODEL_PATH = "internlm/internlm-xcomposer2-4khd-7b"
 
@@ -30,29 +36,43 @@ class InternLM2Model:
     def __init__(self):
         self.initialized = False
         self.device = "cpu"
+        self.quantization_config = None
         self.tokenizer = None
         self.model = None
 
-    def load_model(self, cache_dir, device):
+    def load_model(self, cache_dir, device, quantization):
         print("loading intern-lm2 model")
         self.device = device
 
         if not self.initialized:
-            self.model = (
-                AutoModel.from_pretrained(
-                    "internlm/internlm-xcomposer2-4khd-7b",
-                    torch_dtype=torch.bfloat16,
-                    trust_remote_code=True,
-                    cache_dir=cache_dir,
-                )
-                .half()
-                .cuda()
-                .eval()
-            )
             self.tokenizer = AutoTokenizer.from_pretrained(
                 "internlm/internlm-xcomposer2-4khd-7b",
                 trust_remote_code=True,
                 cache_dir=cache_dir,
+            )
+
+            self.model = AutoModel.from_pretrained(
+                "internlm/internlm-xcomposer2-4khd-7b",
+                torch_dtype=torch.bfloat16,
+                trust_remote_code=True,
+                # quantization_config=self.quantization_config,
+                cache_dir=cache_dir,
+            )
+
+            # self.set_quantize(self.model, quantization)
+            self.model.to(device).eval()
+
+            self.initialized = True
+
+    def set_quantize(self, model, quantization):
+        if quantization == "4bit":
+            self.model = QuantizedModelForCausalLM.quantize(
+                self.model, weights=qint4, exclude="lm_head"
+            )
+
+        if quantization == "8bit":
+            self.model = QuantizedModelForCausalLM.quantize(
+                self.model, weights=qint8, exclude="lm_head"
             )
 
     def get_caption(
@@ -60,7 +80,6 @@ class InternLM2Model:
         input_image,
         model_prompt,
     ):
-
         padded_image = pad_to_multiple(input_image)
         input_tensor = transform(padded_image).unsqueeze(0)
 

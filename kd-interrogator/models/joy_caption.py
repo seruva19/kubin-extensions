@@ -97,6 +97,7 @@ class JoyCaptionInterrogatorModel:
             )
             self.image_adapter.eval()
             self.image_adapter.to(self.device)
+            self.initialized = True
 
     def get_caption(
         self,

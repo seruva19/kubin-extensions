@@ -65,6 +65,7 @@ class CogVLM2Model:
                     .eval()
                     .to(self.device)
                 )
+            self.initialized = True
 
     def get_caption(
         self,
