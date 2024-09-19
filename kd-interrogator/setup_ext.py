@@ -265,6 +265,7 @@ def setup(kubin):
         image_dir,
         batch_mode,
         image_extensions,
+        skip_existing,
         output_dir,
         caption_extension,
         output_csv,
@@ -299,37 +300,41 @@ def setup(kubin):
             filename = relevant_images[image_count][0]
             filepath = relevant_images[image_count][1]
 
-            image = Image.open(filepath)
-            if model_index == 0:
-                caption = interrogate(
-                    image,
-                    mode,
-                    clip_model,
-                    blip_type,
-                    chunk_size,
-                    prepended_txt,
-                    appended_txt,
-                )
-            elif model_index == 1:
-                caption = vlm_interrogate(
-                    image,
-                    vlm_model,
-                    vlm_prompt,
-                    prepended_txt,
-                    appended_txt,
-                    quantization,
-                )
+            caption_filename = os.path.splitext(filename)[0]
+            caption_path = f"{output_dir}/{caption_filename}{caption_extension}"
 
-            if batch_mode == 0:
-                caption_filename = os.path.splitext(filename)[0]
-                with open(
-                    f"{output_dir}/{caption_filename}{caption_extension}",
-                    "w",
-                    encoding="utf-8",
-                ) as file:
-                    file.write(caption)
-            elif batch_mode == 1:
-                relevant_images[image_count][2] = caption
+            if skip_existing and os.path.exists(caption_path) and batch_mode == 0:
+                with open(caption_path, "r", encoding="utf-8") as file:
+                    caption = file.read()
+                if batch_mode == 1:
+                    relevant_images[image_count][2] = caption
+            else:
+                image = Image.open(filepath)
+                if model_index == 0:
+                    caption = interrogate(
+                        image,
+                        mode,
+                        clip_model,
+                        blip_type,
+                        chunk_size,
+                        prepended_txt,
+                        appended_txt,
+                    )
+                elif model_index == 1:
+                    caption = vlm_interrogate(
+                        image,
+                        vlm_model,
+                        vlm_prompt,
+                        prepended_txt,
+                        appended_txt,
+                        quantization,
+                    )
+
+                if batch_mode == 0:
+                    with open(caption_path, "w", encoding="utf-8") as file:
+                        file.write(caption)
+                elif batch_mode == 1:
+                    relevant_images[image_count][2] = caption
 
             image_count += 1
 
@@ -518,13 +523,20 @@ def setup(kubin):
                                 label="Files to interrogate",
                             )
 
-                        caption_mode = gr.Radio(
-                            choices=["text files", "csv dataset"],
-                            info="Save captions to separate text files or to a single csv file",
-                            value="text files",
-                            label="Caption save mode",
-                            type="index",
-                        )
+                        with gr.Row():
+                            caption_mode = gr.Radio(
+                                choices=["text files", "csv dataset"],
+                                info="Save captions to separate text files or to a single csv file",
+                                value="text files",
+                                label="Caption save mode",
+                                type="index",
+                            )
+                            skip_existing = gr.Checkbox(
+                                True,
+                                info="Do not overwrite if caption file already exists",
+                                label="Skip if caption exists",
+                            )
+
                         output_dir = gr.Textbox(
                             label="Output folder",
                             info="If empty, the same folder will be used",
@@ -567,6 +579,7 @@ def setup(kubin):
                                 image_dir,
                                 caption_mode,
                                 image_types,
+                                skip_existing,
                                 output_dir,
                                 caption_extension,
                                 output_csv,
