@@ -12,6 +12,7 @@ import pandas as pd
 import torch
 import os
 from models.joy_caption_pre import JoyCaptionPreAlphaInterrogatorModel
+from models.joy_caption_alpha import JoyCaptionAlphaOneInterrogatorModel
 from models.cogvlm2 import CogVLM2Model
 from models.internlm_xc2_4khd import InternLM2Model
 from models.qwen2_vl import Qwen2VLModel
@@ -180,6 +181,11 @@ def setup(kubin):
 
             elif vlm_model_id == "fancyfeast/joy-caption-pre-alpha":
                 vlm_model = JoyCaptionPreAlphaInterrogatorModel()
+                vlm_model.load_components(cache_dir, device)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
+            elif vlm_model_id == "fancyfeast/joy-caption-alpha-one":
+                vlm_model = JoyCaptionAlphaOneInterrogatorModel()
                 vlm_model.load_components(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
@@ -397,6 +403,7 @@ def setup(kubin):
                                             "Qwen/Qwen2-VL-7B-Instruct",
                                             "openbmb/MiniCPM-V-2_6",
                                             "fancyfeast/joy-caption-pre-alpha",
+                                            "fancyfeast/joy-caption-alpha-one",
                                         ],
                                         value="vikhyatk/moondream2",
                                         label="VLM name",
@@ -447,13 +454,16 @@ def setup(kubin):
                                         prompt = (
                                             "Make a detailed description of this image."
                                         )
-
                                     elif (
                                         vlm_model == "fancyfeast/joy-caption-pre-alpha"
                                     ):
                                         prompt = (
                                             "A descriptive caption for this image:\n"
                                         )
+                                    elif (
+                                        vlm_model == "fancyfeast/joy-caption-alpha-one"
+                                    ):
+                                        prompt = "descriptive,formal,very long"
 
                                     return prompt
 
