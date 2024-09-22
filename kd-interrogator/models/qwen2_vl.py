@@ -30,13 +30,13 @@ class Qwen2VLModel:
 
         if not self.initialized:
             self.model = Qwen2VLForConditionalGeneration.from_pretrained(
-                "Qwen/Qwen2-VL-7B-Instruct",
+                MODEL_PATH,
                 torch_dtype="auto",
                 device_map="auto",
                 cache_dir=cache_dir,
-            )
+            ).to(self.device)
             self.processor = AutoProcessor.from_pretrained(
-                "Qwen/Qwen2-VL-7B-Instruct", cache_dir=cache_dir
+                MODEL_PATH, cache_dir=cache_dir
             )
             self.initialized = True
 

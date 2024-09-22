@@ -34,7 +34,7 @@ class ImageAdapter(nn.Module):
         return x
 
 
-class JoyCaptionInterrogatorModel:
+class JoyCaptionPreAlphaInterrogatorModel:
     def __init__(self):
         self.initialized = False
         self.device = "cuda"

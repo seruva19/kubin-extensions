@@ -46,13 +46,13 @@ class InternLM2Model:
 
         if not self.initialized:
             self.tokenizer = AutoTokenizer.from_pretrained(
-                "internlm/internlm-xcomposer2-4khd-7b",
+                MODEL_PATH,
                 trust_remote_code=True,
                 cache_dir=cache_dir,
             )
 
             self.model = AutoModel.from_pretrained(
-                "internlm/internlm-xcomposer2-4khd-7b",
+                MODEL_PATH,
                 torch_dtype=torch.bfloat16,
                 trust_remote_code=True,
                 # quantization_config=self.quantization_config,

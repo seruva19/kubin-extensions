@@ -11,10 +11,11 @@ from transformers import (
 import pandas as pd
 import torch
 import os
-from models.joy_caption import JoyCaptionInterrogatorModel
+from models.joy_caption_pre import JoyCaptionPreAlphaInterrogatorModel
 from models.cogvlm2 import CogVLM2Model
 from models.internlm_xc2_4khd import InternLM2Model
 from models.qwen2_vl import Qwen2VLModel
+from models.mini_cpm import MiniCPMModel
 
 title = "Interrogator"
 
@@ -178,7 +179,7 @@ def setup(kubin):
                 )[p]
 
             elif vlm_model_id == "fancyfeast/joy-caption-pre-alpha":
-                vlm_model = JoyCaptionInterrogatorModel()
+                vlm_model = JoyCaptionPreAlphaInterrogatorModel()
                 vlm_model.load_components(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
@@ -194,6 +195,11 @@ def setup(kubin):
 
             elif vlm_model_id == "Qwen/Qwen2-VL-7B-Instruct":
                 vlm_model = Qwen2VLModel()
+                vlm_model.load_model(cache_dir, device)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
+            elif vlm_model_id == "openbmb/MiniCPM-V-2_6":
+                vlm_model = MiniCPMModel()
                 vlm_model.load_model(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
@@ -389,6 +395,7 @@ def setup(kubin):
                                             "THUDM/cogvlm2-llama3-chat-19B",
                                             "internlm/internlm-xcomposer2-4khd-7b",
                                             "Qwen/Qwen2-VL-7B-Instruct",
+                                            "openbmb/MiniCPM-V-2_6",
                                             "fancyfeast/joy-caption-pre-alpha",
                                         ],
                                         value="vikhyatk/moondream2",
@@ -436,6 +443,11 @@ def setup(kubin):
                                         prompt = "<ImageHere>Please describe this image in detail."
                                     elif vlm_model == "Qwen/Qwen2-VL-7B-Instruct":
                                         prompt = "Describe this image as detailed as possible, even the slightest details should be preserved."
+                                    elif vlm_model == "openbmb/MiniCPM-V-2_6":
+                                        prompt = (
+                                            "Make a detailed description of this image."
+                                        )
+
                                     elif (
                                         vlm_model == "fancyfeast/joy-caption-pre-alpha"
                                     ):
