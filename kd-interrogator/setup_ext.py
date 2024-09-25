@@ -8,6 +8,7 @@ from transformers import (
     BlipForConditionalGeneration,
     Blip2ForConditionalGeneration,
 )
+import re
 import pandas as pd
 import torch
 import os
@@ -16,6 +17,7 @@ from models.joy_caption_alpha import JoyCaptionAlphaOneInterrogatorModel
 from models.cogvlm2 import CogVLM2Model
 from models.internlm_xc2_4khd import InternLM2Model
 from models.qwen2_vl import Qwen2VLModel
+from models.qwen2_vl_relaxed import Qwen2VLRelaxedModel
 from models.mini_cpm import MiniCPMModel
 
 title = "Interrogator"
@@ -204,6 +206,11 @@ def setup(kubin):
                 vlm_model.load_model(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
+            elif vlm_model_id == "Ertugrul/Qwen2-VL-7B-Captioner-Relaxed":
+                vlm_model = Qwen2VLRelaxedModel()
+                vlm_model.load_model(cache_dir, device)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
             elif vlm_model_id == "openbmb/MiniCPM-V-2_6":
                 vlm_model = MiniCPMModel()
                 vlm_model.load_model(cache_dir, device)
@@ -278,6 +285,7 @@ def setup(kubin):
         batch_mode,
         image_extensions,
         skip_existing,
+        remove_line_breaks,
         output_dir,
         caption_extension,
         output_csv,
@@ -342,6 +350,9 @@ def setup(kubin):
                         quantization,
                     )
 
+                if remove_line_breaks:
+                    caption = re.sub(r"[\r\n]+", " ", caption)
+
                 if batch_mode == 0:
                     with open(caption_path, "w", encoding="utf-8") as file:
                         file.write(caption)
@@ -401,6 +412,7 @@ def setup(kubin):
                                             "THUDM/cogvlm2-llama3-chat-19B",
                                             "internlm/internlm-xcomposer2-4khd-7b",
                                             "Qwen/Qwen2-VL-7B-Instruct",
+                                            "Ertugrul/Qwen2-VL-7B-Captioner-Relaxed",
                                             "openbmb/MiniCPM-V-2_6",
                                             "fancyfeast/joy-caption-pre-alpha",
                                             "fancyfeast/joy-caption-alpha-one",
@@ -450,6 +462,11 @@ def setup(kubin):
                                         prompt = "<ImageHere>Please describe this image in detail."
                                     elif vlm_model == "Qwen/Qwen2-VL-7B-Instruct":
                                         prompt = "Describe this image as detailed as possible, even the slightest details should be preserved."
+                                    elif (
+                                        vlm_model
+                                        == "Ertugrul/Qwen2-VL-7B-Captioner-Relaxed"
+                                    ):
+                                        prompt = "Provide a highly detailed and objective description of the image. Describe only observable elements without speculation, ensuring no detail, no matter how small, is overlooked."
                                     elif vlm_model == "openbmb/MiniCPM-V-2_6":
                                         prompt = (
                                             "Make a detailed description of this image."
@@ -553,11 +570,15 @@ def setup(kubin):
                                 label="Caption save mode",
                                 type="index",
                             )
-                            skip_existing = gr.Checkbox(
-                                True,
-                                info="Do not overwrite if caption file already exists",
-                                label="Skip if caption exists",
-                            )
+                            with gr.Column():
+                                skip_existing = gr.Checkbox(
+                                    True,
+                                    label="Skip if caption exists",
+                                )
+                                remove_line_breaks = gr.Checkbox(
+                                    False,
+                                    label="Remove line breaks",
+                                )
 
                         output_dir = gr.Textbox(
                             label="Output folder",
@@ -602,6 +623,7 @@ def setup(kubin):
                                 caption_mode,
                                 image_types,
                                 skip_existing,
+                                remove_line_breaks,
                                 output_dir,
                                 caption_extension,
                                 output_csv,
