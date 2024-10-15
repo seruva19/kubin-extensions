@@ -19,8 +19,9 @@ from models.cogvlm2 import CogVLM2Model
 from models.internlm_xc2_4khd import InternLM2Model
 from models.qwen2_vl import Qwen2VLModel
 from models.qwen2_vl_relaxed import Qwen2VLRelaxedModel
-from models.mini_cpm import MiniCPMModel
 from models.pixtral_relaxed import PixtralRelaxedModel
+from models.molmo import Molmo7BModel
+from models.mini_cpm import MiniCPMModel
 
 title = "Interrogator"
 
@@ -228,6 +229,11 @@ def setup(kubin):
                 vlm_model.load_model(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
+            elif vlm_model_id == "cyan2k/molmo-7B-O-bnb-4bit":
+                vlm_model = Molmo7BModel()
+                vlm_model.load_model(cache_dir, device)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
         return vlm_model_fn
 
     def route_interrogate(
@@ -430,6 +436,7 @@ def setup(kubin):
                                             "fancyfeast/joy-caption-pre-alpha",
                                             "fancyfeast/joy-caption-alpha-one",
                                             "fancyfeast/joy-caption-alpha-two",
+                                            "cyan2k/molmo-7B-O-bnb-4bit",
                                         ],
                                         value="vikhyatk/moondream2",
                                         label="VLM name",
@@ -505,6 +512,9 @@ def setup(kubin):
                                         vlm_model == "fancyfeast/joy-caption-alpha-two"
                                     ):
                                         prompt = "Descriptive,very long"
+
+                                    elif vlm_model == "cyan2k/molmo-7B-O-bnb-4bit":
+                                        prompt = "Describe this image."
 
                                     return prompt
 

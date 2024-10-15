@@ -39,6 +39,7 @@ class Qwen2VLRelaxedModel:
                 device_map="auto",
                 cache_dir=cache_dir,
             ).to(self.device)
+
             self.processor = AutoProcessor.from_pretrained(
                 MODEL_PATH, cache_dir=cache_dir
             )
