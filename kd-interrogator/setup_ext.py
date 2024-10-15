@@ -14,11 +14,13 @@ import torch
 import os
 from models.joy_caption_pre import JoyCaptionPreAlphaInterrogatorModel
 from models.joy_caption_alpha import JoyCaptionAlphaOneInterrogatorModel
+from models.joy_caption_alpha_two import JoyCaptionAlphaTwoInterrogatorModel
 from models.cogvlm2 import CogVLM2Model
 from models.internlm_xc2_4khd import InternLM2Model
 from models.qwen2_vl import Qwen2VLModel
 from models.qwen2_vl_relaxed import Qwen2VLRelaxedModel
 from models.mini_cpm import MiniCPMModel
+from models.pixtral_relaxed import PixtralRelaxedModel
 
 title = "Interrogator"
 
@@ -191,6 +193,11 @@ def setup(kubin):
                 vlm_model.load_components(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
+            elif vlm_model_id == "fancyfeast/joy-caption-alpha-two":
+                vlm_model = JoyCaptionAlphaTwoInterrogatorModel()
+                vlm_model.load_components(cache_dir, device)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
             elif vlm_model_id == "THUDM/cogvlm2-llama3-chat-19B":
                 vlm_model = CogVLM2Model()
                 vlm_model.load_model(cache_dir, device, quantization)
@@ -209,6 +216,11 @@ def setup(kubin):
             elif vlm_model_id == "Ertugrul/Qwen2-VL-7B-Captioner-Relaxed":
                 vlm_model = Qwen2VLRelaxedModel()
                 vlm_model.load_model(cache_dir, device)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
+            elif vlm_model_id == "Ertugrul/Pixtral-12B-Captioner-Relaxed":
+                vlm_model = PixtralRelaxedModel()
+                vlm_model.load_model(cache_dir, device, quantization)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "openbmb/MiniCPM-V-2_6":
@@ -413,9 +425,11 @@ def setup(kubin):
                                             "internlm/internlm-xcomposer2-4khd-7b",
                                             "Qwen/Qwen2-VL-7B-Instruct",
                                             "Ertugrul/Qwen2-VL-7B-Captioner-Relaxed",
+                                            "Ertugrul/Pixtral-12B-Captioner-Relaxed",
                                             "openbmb/MiniCPM-V-2_6",
                                             "fancyfeast/joy-caption-pre-alpha",
                                             "fancyfeast/joy-caption-alpha-one",
+                                            "fancyfeast/joy-caption-alpha-two",
                                         ],
                                         value="vikhyatk/moondream2",
                                         label="VLM name",
@@ -467,6 +481,12 @@ def setup(kubin):
                                         == "Ertugrul/Qwen2-VL-7B-Captioner-Relaxed"
                                     ):
                                         prompt = "Provide a highly detailed and objective description of the image. Describe only observable elements without speculation, ensuring no detail, no matter how small, is overlooked."
+                                    elif (
+                                        vlm_model
+                                        == "Ertugrul/Pixtral-12B-Captioner-Relaxed"
+                                    ):
+                                        prompt = "Describe the image.\n"
+
                                     elif vlm_model == "openbmb/MiniCPM-V-2_6":
                                         prompt = (
                                             "Make a detailed description of this image."
@@ -481,6 +501,10 @@ def setup(kubin):
                                         vlm_model == "fancyfeast/joy-caption-alpha-one"
                                     ):
                                         prompt = "descriptive,formal,very long"
+                                    elif (
+                                        vlm_model == "fancyfeast/joy-caption-alpha-two"
+                                    ):
+                                        prompt = "Descriptive,very long"
 
                                     return prompt
 

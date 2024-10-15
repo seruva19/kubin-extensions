@@ -2,7 +2,7 @@ clip-interrogator==0.6.0
 open-clip-torch==2.18.0
 timm==0.9.16
 einops==0.7.0
-https://huggingface.co/Rodeszones/CogVLM-grounding-generalist-hf-quant4/resolve/main/triton-2.1.0-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/woct0rdho/triton/releases/download/v3.0.0-windows.post1/triton-3.0.0-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 triton==3.0.0; platform_system != "Windows"
 qwen-vl-utils==0.0.2
 bitsandbytes==0.43.3
