@@ -1,0 +1,18 @@
+.kd-similarity-available-images .wrap {
+    display: block !important;
+}
+
+.kd-similarity-folder-path input {
+    resize: none;
+}
+
+.kd-similarity-available-images>.form {
+    height: 600px !important;
+    overflow-y: scroll !important;
+}
+
+.kd-similarity-available-images label {
+    border: none !important;
+    box-shadow: none !important;
+    background: none !important;
+}
