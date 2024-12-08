@@ -12,16 +12,7 @@ import re
 import pandas as pd
 import torch
 import os
-from models.joy_caption_pre import JoyCaptionPreAlphaInterrogatorModel
-from models.joy_caption_alpha import JoyCaptionAlphaOneInterrogatorModel
-from models.joy_caption_alpha_two import JoyCaptionAlphaTwoInterrogatorModel
-from models.cogvlm2 import CogVLM2Model
-from models.internlm_xc2_4khd import InternLM2Model
-from models.qwen2_vl import Qwen2VLModel
-from models.qwen2_vl_relaxed import Qwen2VLRelaxedModel
-from models.pixtral_relaxed import PixtralRelaxedModel
-from models.molmo import Molmo7BModel
-from models.mini_cpm import MiniCPMModel
+
 
 title = "Interrogator"
 
@@ -185,51 +176,73 @@ def setup(kubin):
                 )[p]
 
             elif vlm_model_id == "fancyfeast/joy-caption-pre-alpha":
+                from models.joy_caption_pre import JoyCaptionPreAlphaInterrogatorModel
+
                 vlm_model = JoyCaptionPreAlphaInterrogatorModel()
                 vlm_model.load_components(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "fancyfeast/joy-caption-alpha-one":
+                from models.joy_caption_alpha import JoyCaptionAlphaOneInterrogatorModel
+
                 vlm_model = JoyCaptionAlphaOneInterrogatorModel()
                 vlm_model.load_components(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "fancyfeast/joy-caption-alpha-two":
+                from models.joy_caption_alpha_two import (
+                    JoyCaptionAlphaTwoInterrogatorModel,
+                )
+
                 vlm_model = JoyCaptionAlphaTwoInterrogatorModel()
                 vlm_model.load_components(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "THUDM/cogvlm2-llama3-chat-19B":
+                from models.cogvlm2 import CogVLM2Model
+
                 vlm_model = CogVLM2Model()
                 vlm_model.load_model(cache_dir, device, quantization)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "internlm/internlm-xcomposer2-4khd-7b":
+                from models.internlm_xc2_4khd import InternLM2Model
+
                 vlm_model = InternLM2Model()
                 vlm_model.load_model(cache_dir, device, quantization)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "Qwen/Qwen2-VL-7B-Instruct":
+                from models.qwen2_vl import Qwen2VLModel
+
                 vlm_model = Qwen2VLModel()
                 vlm_model.load_model(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "Ertugrul/Qwen2-VL-7B-Captioner-Relaxed":
+                from models.qwen2_vl_relaxed import Qwen2VLRelaxedModel
+
                 vlm_model = Qwen2VLRelaxedModel()
                 vlm_model.load_model(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "Ertugrul/Pixtral-12B-Captioner-Relaxed":
+                from models.pixtral_relaxed import PixtralRelaxedModel
+
                 vlm_model = PixtralRelaxedModel()
                 vlm_model.load_model(cache_dir, device, quantization)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "openbmb/MiniCPM-V-2_6":
+                from models.mini_cpm import MiniCPMModel
+
                 vlm_model = MiniCPMModel()
                 vlm_model.load_model(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "cyan2k/molmo-7B-O-bnb-4bit":
+                from models.molmo import Molmo7BModel
+
                 vlm_model = Molmo7BModel()
                 vlm_model.load_model(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
