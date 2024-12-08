@@ -9,7 +9,7 @@ import os
 import re
 from pathlib import Path
 import os, torch
-
+from training_ui import training_block
 
 title = "Switti"
 dir = Path(__file__).parent.absolute()
@@ -53,6 +53,7 @@ def setup(kubin):
                                 512,
                                 step=64,
                                 label="Width",
+                                interactive=False,
                             )
                             height = gr.Slider(
                                 256,
@@ -60,6 +61,7 @@ def setup(kubin):
                                 512,
                                 step=64,
                                 label="Height",
+                                interactive=False,
                             )
                             more_smooth = gr.Checkbox(
                                 True,
@@ -157,6 +159,8 @@ def setup(kubin):
                             f"args => kubin.UI.taskFinished('{title}')",
                         ],
                     )
+            # with gr.Tab(label="Training"):
+            #     training_block(kubin)
 
         return switti_block
 
@@ -167,6 +171,7 @@ def setup(kubin):
 
 
 def init_model(kubin, switti_model, device, cache_dir):
+    sys.path.append(os.path.join("extensions", "kd-switti", "switti"))
     from switti.models import SwittiPipeline
 
     model_path = "yresearch/Switti"
@@ -247,8 +252,6 @@ def flush(switti_model, kubin):
 
 
 def mount(kubin):
-    sys.path.append(os.path.join("extensions", "kd-switti", "switti"))
-
     switti_repo = "https://github.com/yandex-research/switti"
     commit = "0f2dbf5"
     destination_dir = "extensions/kd-switti/switti"
