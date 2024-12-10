@@ -178,6 +178,7 @@ def init_model(kubin, switti_model, device, cache_dir):
     pipe = SwittiPipeline.from_pretrained(
         model_path, torch_dtype=torch.bfloat16, device=device
     )
+
     switti_model["pipe"] = pipe
     return pipe
 
@@ -257,6 +258,7 @@ def mount(kubin):
     destination_dir = "extensions/kd-switti/switti"
 
     if not os.path.exists(destination_dir):
+        print("Cloning Switti github repo...")
         current_path = os.getcwd()
         temp_dir = tempfile.mkdtemp()
         temp_switti = os.path.join(temp_dir, "temp_switti")
