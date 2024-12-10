@@ -2,9 +2,7 @@ from PIL import Image
 from transformers import LlavaForConditionalGeneration, AutoProcessor
 from transformers import BitsAndBytesConfig
 import torch
-import transformers
-from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
-from qwen_vl_utils import process_vision_info
+from transformers import AutoProcessor
 import base64
 from io import BytesIO
 

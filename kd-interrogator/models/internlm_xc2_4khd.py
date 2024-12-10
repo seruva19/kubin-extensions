@@ -1,11 +1,8 @@
-import numpy as np
 import torch
 import torch.amp.autocast_mode
 import torch
 from transformers import (
-    AutoModelForCausalLM,
     AutoTokenizer,
-    BitsAndBytesConfig,
     AutoModel,
 )
 from PIL import Image

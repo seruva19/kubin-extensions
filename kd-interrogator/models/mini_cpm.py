@@ -1,11 +1,8 @@
 import torch
 import torch.amp.autocast_mode
 import torch
-import transformers
 from transformers import AutoModel, AutoTokenizer
 
-import base64
-from io import BytesIO
 
 MODEL_PATH = "openbmb/MiniCPM-V-2_6"
 

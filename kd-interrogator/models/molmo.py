@@ -1,6 +1,4 @@
 from transformers import AutoModelForCausalLM, AutoProcessor, GenerationConfig
-from transformers import BitsAndBytesConfig
-import torch
 
 MODEL_ID = "cyan2k/molmo-7B-O-bnb-4bit"
 

@@ -1,8 +1,6 @@
-import torch
 import torch.amp.autocast_mode
 import torch
-import transformers
-from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
+from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
 from qwen_vl_utils import process_vision_info
 import base64
 from io import BytesIO

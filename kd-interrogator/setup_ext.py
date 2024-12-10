@@ -247,6 +247,13 @@ def setup(kubin):
                 vlm_model.load_model(cache_dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
+            elif vlm_model_id == "google/paligemma2-3b-ft-docci-448":
+                from models.paligemma2 import Paligemma2Model
+
+                vlm_model = Paligemma2Model()
+                vlm_model.load_model(cache_dir, device)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
         return vlm_model_fn
 
     def route_interrogate(
@@ -450,6 +457,7 @@ def setup(kubin):
                                             "fancyfeast/joy-caption-alpha-one",
                                             "fancyfeast/joy-caption-alpha-two",
                                             "cyan2k/molmo-7B-O-bnb-4bit",
+                                            "google/paligemma2-3b-ft-docci-448",
                                         ],
                                         value="vikhyatk/moondream2",
                                         label="VLM name",
@@ -528,6 +536,11 @@ def setup(kubin):
 
                                     elif vlm_model == "cyan2k/molmo-7B-O-bnb-4bit":
                                         prompt = "Describe this image."
+
+                                    elif (
+                                        vlm_model == "google/paligemma2-3b-ft-docci-448"
+                                    ):
+                                        prompt = "caption in detail"
 
                                     return prompt
 
