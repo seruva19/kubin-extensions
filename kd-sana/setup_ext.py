@@ -127,7 +127,22 @@ def setup(kubin):
     }
 
 
+def peek_hf_key():
+    hf_key_path = os.path.join("extensions", "kd-sana", "hf.key")
+    if not os.path.exists(hf_key_path):
+        print(
+            "Some models may be gated. To prevent this, you need to put your HuggingFace API key in extensions/kd-sana/hf.key"
+        )
+        return
+
+    with open(hf_key_path, "r") as file:
+        hf_key = file.read()
+    os.environ["HF_TOKEN"] = hf_key
+
+
 def init_model(kubin, sana_model, device, cache_dir):
+    peek_hf_key()
+
     sys.path.append(os.path.join("extensions", "kd-sana", "sana"))
     from sana.app.sana_pipeline import SanaPipeline
 
