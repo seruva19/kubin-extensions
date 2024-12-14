@@ -1,1 +1,2 @@
 scikit-image==0.19.3
+PyMatting==1.1.13
