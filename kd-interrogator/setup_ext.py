@@ -13,7 +13,6 @@ import pandas as pd
 import torch
 import os
 
-
 title = "Interrogator"
 
 from unittest.mock import patch

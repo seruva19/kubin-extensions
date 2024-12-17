@@ -4,11 +4,13 @@ from transformers import (
 )
 import torch
 
+
 MODEL_NAME = "google/paligemma2-3b-ft-docci-448"
 
 
 class Paligemma2Model:
     def __init__(self):
+
         self.initialized = False
         self.device = "cpu"
         self.model = None

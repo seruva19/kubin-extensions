@@ -6,6 +6,5 @@ https://github.com/woct0rdho/triton/releases/download/v3.0.0-windows.post1/trito
 triton==3.0.0; platform_system != "Windows"
 qwen-vl-utils==0.0.2
 bitsandbytes==0.43.3
-optimum-quanto==0.2.4
 peft==0.12.0
 tensorflow-cpu==2.17.0
