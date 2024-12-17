@@ -10,7 +10,7 @@ from pathlib import Path
 dir = Path(__file__).parent.absolute()
 default_upscalers_path = f"{dir}/upscalers.default.yaml"
 
-title = "Upscaler"
+title = "Image Upscaler"
 
 
 def setup(kubin):

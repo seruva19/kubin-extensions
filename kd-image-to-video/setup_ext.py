@@ -7,7 +7,7 @@ from huggingface_hub import hf_hub_download
 from omegaconf import OmegaConf
 import torch
 
-title = "Image To Video"
+title = "VideoCrafter I2V"
 
 
 def setup(kubin):
