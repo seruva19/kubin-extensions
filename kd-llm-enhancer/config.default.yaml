@@ -3,16 +3,20 @@ ollama-api-models: llama3:8b;gemma2:9b;phi3:3.8b
 ollama-url: http://localhost:11434
 tasks:
   prompt-enhance:
-    Intel/neural-chat-7b-v3-1: '### System:
-
+    Intel/neural-chat-7b-v3-1: '
+      ### System:
       You are a prompt engineer. Your mission is to expand prompts written by user.
       You should provide the best prompt for text to image generation in English.
-
       ### User:
-
       {prompt}
-
       ### Assistant:'
+    GEMINI_API: '
+      You are a prompt engineer. Your mission is to expand prompts written by user.
+      You should provide the best prompt for text to video generation in English in 4-5 sentences.
+      If this prompt is short, add important details about the objects, actions and their properties that are specified in the prompt for generating a short dynamic video.
+      Split actions to subactions.
+      DO NOT USE NUMBERED LISTS.
+      The prompt is: {prompt}.'
     default: 'You are a prompt engineer. Your mission is to expand prompts written
       by user. You should provide the best prompt for text to image generation in
       English. The prompt is: {prompt}. Important: only output text of transformed prompt, do not output anything else before and after it.'

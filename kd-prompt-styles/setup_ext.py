@@ -95,7 +95,7 @@ def append_style(target, params, current_style, default_style):
 
 
 def setup(kubin):
-    targets = ["t2i", "i2i", "mix", "inpaint", "outpaint"]
+    targets = ["t2i", "i2i", "mix", "inpaint", "outpaint", "t2v"]
 
     yaml_config = kubin.yaml_utils.YamlConfig(Path(__file__).parent.absolute())
     config = yaml_config.read()
@@ -128,20 +128,26 @@ def setup(kubin):
                 filter(
                     lambda x: x is not None,
                     [
-                        None
-                        if selected_modifier is None
-                        else f"<span style='font-weight: bold'>prompt template: </span> {selected_modifier}".replace(
-                            "{prompt}", "<span style='color: blue'>{prompt}</span>"
+                        (
+                            None
+                            if selected_modifier is None
+                            else f"<span style='font-weight: bold'>prompt template: </span> {selected_modifier}".replace(
+                                "{prompt}", "<span style='color: blue'>{prompt}</span>"
+                            )
                         ),
-                        None
-                        if selected_negative_modifier is None
-                        else f"<span style='font-weight: bold'>negative prompt template: </span> {selected_negative_modifier}".replace(
-                            "{negative_prompt}",
-                            "<span style='color: red'>{negative_prompt}</span>",
+                        (
+                            None
+                            if selected_negative_modifier is None
+                            else f"<span style='font-weight: bold'>negative prompt template: </span> {selected_negative_modifier}".replace(
+                                "{negative_prompt}",
+                                "<span style='color: red'>{negative_prompt}</span>",
+                            )
                         ),
-                        None
-                        if selected_source is None
-                        else f"<br /><span>source:  {selected_source}</span>",
+                        (
+                            None
+                            if selected_source is None
+                            else f"<br /><span>source:  {selected_source}</span>"
+                        ),
                     ],
                 )
             ),
@@ -152,9 +158,11 @@ def setup(kubin):
     def add_style(chosen_style):
         return (
             gr.update(visible=True),
-            f"User style {uuid.uuid4()}"
-            if chosen_style is None
-            else chosen_style["name"],
+            (
+                f"User style {uuid.uuid4()}"
+                if chosen_style is None
+                else chosen_style["name"]
+            ),
             "{prompt}" if chosen_style is None else chosen_style["prompt"],
             "{negative_prompt}" if chosen_style is None else chosen_style["negative"],
             "" if chosen_style is None else chosen_style["source"],

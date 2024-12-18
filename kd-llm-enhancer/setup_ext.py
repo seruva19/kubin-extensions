@@ -7,15 +7,17 @@ import os
 from enum import Enum
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import requests
+import google.generativeai as genai
 
 
 class LLM_Type(Enum):
     HF_LOCAL = "HF Repo Id"
     OLLAMA_API = "Ollama API"
+    GEMINI_API = "Gemini 1.5 Flash Free Tier"
 
 
 title = "LLM Enhancer"
-targets = ["t2i", "i2i", "mix", "inpaint", "outpaint"]
+targets = ["t2i", "i2i", "mix", "inpaint", "outpaint", "t2v"]
 
 
 def format_prompt(source_prompt, llm_prompt):
@@ -78,6 +80,24 @@ def enhance_with_llama_api(
     return source_prompt
 
 
+def peek_gemini_key():
+    current_file_path = os.path.abspath(__file__)
+    current_directory = os.path.dirname(current_file_path)
+    gemini_key_path = os.path.join(current_directory, "gemini.key")
+    with open(gemini_key_path, "r") as file:
+        gemini_key = file.read()
+    return gemini_key
+
+
+def enhance_with_gemini_api(kubin, source_prompt, llm_prompt):
+    genai.configure(api_key=peek_gemini_key())
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    prompt = format_prompt(source_prompt, llm_prompt)
+    response = model.generate_content(prompt)
+    text = response.text
+    return text
+
+
 def enhance(
     kubin,
     target,
@@ -95,11 +115,19 @@ def enhance(
             enhanced_prompt = enhance_with_local_llm(
                 kubin, hf_model_name, params["prompt"], llm_prompt
             )
-        else:
+        elif type == LLM_Type.OLLAMA_API.name:
             print(f"Using {ollama_model_name} via Ollama API")
             enhanced_prompt = enhance_with_llama_api(
                 kubin, ollama_model_name, ollama_url, params["prompt"], llm_prompt
             )
+        elif type == LLM_Type.GEMINI_API.name:
+            print(f"Using Gemini API")
+            enhanced_prompt = enhance_with_gemini_api(
+                kubin, params["prompt"], llm_prompt
+            )
+        else:
+            raise Exception(f"unknown LLM type: {type}")
+
         params["prompt"] = enhanced_prompt
         print(f"Enhanced prompt for {target} is: '{enhanced_prompt}'")
 
@@ -142,7 +170,11 @@ def setup(kubin):
 
             with gr.Row():
                 model_type = gr.Radio(
-                    choices=[LLM_Type.HF_LOCAL.name, LLM_Type.OLLAMA_API.name],
+                    choices=[
+                        LLM_Type.HF_LOCAL.name,
+                        LLM_Type.OLLAMA_API.name,
+                        LLM_Type.GEMINI_API.name,
+                    ],
                     value=LLM_Type.HF_LOCAL.name,
                     label="LLM type",
                     interactive=True,
@@ -190,16 +222,22 @@ def setup(kubin):
                 )
 
             def on_type_change(model_type, hf_model_id, ollama_model_id, task):
+                model = (
+                    hf_model_id
+                    if model_type == LLM_Type.HF_LOCAL.name
+                    else (
+                        ollama_model_id
+                        if model_type == LLM_Type.OLLAMA_API.name
+                        else LLM_Type.GEMINI_API.name
+                    )
+                )
+
                 return [
                     gr.update(visible=model_type == LLM_Type.HF_LOCAL.name),
                     gr.update(visible=model_type == LLM_Type.OLLAMA_API.name),
                     gr.update(visible=model_type == LLM_Type.OLLAMA_API.name),
                     get_prompt_for_task(
-                        (
-                            hf_model_id
-                            if model_type == LLM_Type.HF_LOCAL.name
-                            else ollama_model_id
-                        ),
+                        model,
                         task,
                     ),
                 ]

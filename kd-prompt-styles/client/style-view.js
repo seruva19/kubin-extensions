@@ -15,4 +15,5 @@
     kubin.visualizeAddedCondition('.mix_block .kd-prompt-styles .label-wrap span', '.mix_block .kd-styles-radiobutton-list', 'none')
     kubin.visualizeAddedCondition('.inpaint_block .kd-prompt-styles .label-wrap span', '.inpaint_block .kd-styles-radiobutton-list', 'none')
     kubin.visualizeAddedCondition('.outpaint_block .kd-prompt-styles .label-wrap span', '.outpaint_block .kd-styles-radiobutton-list', 'none')
+    kubin.visualizeAddedCondition('.t2v_block .kd-prompt-styles .label-wrap span', '.t2v_block .kd-styles-radiobutton-list', 'none')
 })(window)
