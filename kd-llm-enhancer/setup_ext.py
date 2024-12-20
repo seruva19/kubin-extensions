@@ -17,7 +17,7 @@ class LLM_Type(Enum):
 
 
 title = "LLM Enhancer"
-targets = ["t2i", "i2i", "mix", "inpaint", "outpaint", "t2v"]
+targets = ["t2i", "i2i", "inpaint", "outpaint", "t2v"]
 
 
 def format_prompt(source_prompt, llm_prompt):

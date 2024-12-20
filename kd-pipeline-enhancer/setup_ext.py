@@ -4,7 +4,7 @@ import gradio as gr
 from pathlib import Path
 
 dir = Path(__file__).parent.absolute()
-title = "Enhancer"
+title = "Pipeline"
 
 enhancer_info = {"freeu": {}}
 
@@ -23,16 +23,16 @@ def setup(kubin):
                 )
             else:
                 kubin.log(
-                    f"Selected pipeline is not supported by '{title}' extension extension, 'BEFORE_PREPARE_PARAMS' hook is ignored."
+                    f"Selected pipeline is not supported by '{title}' extension, 'BEFORE_PREPARE_PARAMS' hook is ignored."
                 )
 
     return {
-        "targets": ["t2i", "i2i", "mix", "inpaint", "outpaint"],
+        "targets": ["t2i", "i2i", "mix", "inpaint", "outpaint", "t2v"],
         "title": title,
         "inject_ui": lambda target, kubin=kubin: enhancer_ui(
             kubin, target, enhancer_info
         ),
         "hook_fn": on_hook,
-        "supports": ["diffusers-kd22"],
+        # "supports": ["diffusers-kd22"],
         "inject_position": "before_params",
     }

@@ -1,9 +1,43 @@
 import gradio as gr
 
 
+def show_freeu(kubin):
+    model = kubin.params("general", "model_name")
+    pipeline = kubin.params("general", "pipeline")
+    return model == "kd22" and pipeline == "diffusers"
+
+
+def show_samplers(kubin):
+    model = kubin.params("general", "model_name")
+    pipeline = kubin.params("general", "pipeline")
+    return model == "kd22" and pipeline == "diffusers"
+
+
 def enhancer_ui(kubin, target, enhancer_info):
     with gr.Column() as enhancer_ui_block:
-        with gr.Accordion("Free-U") as freeu_block:
+        with gr.Accordion("Generation params", open=True) as gen_params_block:
+            with gr.Column() as gen_params_panel:
+                gen_params_panel.elem_classes = ["k-form"]
+
+                def trigger_loop(is_looped):
+                    kubin.params.set_store(f"LOOP_{target.upper()}", is_looped)
+
+                loop_generations = gr.Checkbox(
+                    False,
+                    label="Loop generation",
+                    elem_classes=["pipeline-enable-loop-generations"],
+                )
+                loop_generations.change(
+                    fn=trigger_loop,
+                    inputs=[
+                        loop_generations,
+                    ],
+                    outputs=[],
+                )
+
+        with gr.Accordion(
+            "Free-U", open=False, visible=show_freeu(kubin)
+        ) as freeu_block:
             with gr.Column() as freeu_panel:
                 freeu_panel.elem_classes = ["k-form"]
 
@@ -106,7 +140,7 @@ def enhancer_ui(kubin, target, enhancer_info):
                 outputs=[],
             )
 
-        with gr.Accordion("Samplers") as samplers_block:
+        with gr.Accordion("Samplers", visible=show_samplers(kubin)) as samplers_block:
             pass
 
     return enhancer_ui_block

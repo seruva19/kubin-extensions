@@ -21,7 +21,7 @@ Initially, it contained only extensions that were somehow related to enhancing t
 | <a id="kd-mesh-gen"></a>kd-mesh-gen | Basic implementation of [Shap-E](https://github.com/openai/shap-e) I23D pipeline |
 | <a id="kd-multi-view"></a>kd-multi-view | Basic implementation of [Zero123++](https://github.com/SUDO-AI-3D/zero123plus) "Image to Multi-view" pipeline |
 | <a id="kd-networks"></a>kd-networks | Allows the use of Kandinsky 2.2 LoRA for inference |
-| <a id="kd-pipeline-enhancer"></a>kd-pipeline-enhancer | Currently useless 🤔 |
+| <a id="kd-pipeline-enhancer"></a>kd-pipeline-enhancer | Mostly useless 🤔 |
 | <a id="kd-pixart"></a>kd-pixart | Basic [🤗 diffusers](https://github.com/huggingface/diffusers)-based implementation of [PixArt-Sigma](https://github.com/PixArt-alpha/PixArt-sigma) T2I pipeline |
 | <a id="kd-prompt-styles"></a>kd-prompt-styles | Enables auto-enhancing prompts with community-collected styles. |
 | <a id="kd-sana"></a>kd-sana | Basic implementation of [SANA](https://github.com/NVlabs/Sana) T2I pipeline |
