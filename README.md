@@ -23,7 +23,7 @@ Initially, it contained only extensions that were somehow related to enhancing t
 | <a id="kd-networks"></a>kd-networks | Allows the use of Kandinsky 2.2 LoRA for inference |
 | <a id="kd-pipeline-enhancer"></a>kd-pipeline-enhancer | Mostly useless 🤔 |
 | <a id="kd-pixart"></a>kd-pixart | Basic [🤗 diffusers](https://github.com/huggingface/diffusers)-based implementation of [PixArt-Sigma](https://github.com/PixArt-alpha/PixArt-sigma) T2I pipeline |
-| <a id="kd-prompt-styles"></a>kd-prompt-styles | Enables auto-enhancing prompts with community-collected styles. |
+| <a id="kd-prompt-styles"></a>kd-prompt-styles | Enables auto-enhancing prompts with community-collected styles |
 | <a id="kd-sana"></a>kd-sana | Basic implementation of [SANA](https://github.com/NVlabs/Sana) T2I pipeline |
 | <a id="kd-segmentation"></a>kd-segmentation | GUI wrapper for [Segment Anything](https://github.com/facebookresearch/segment-anything). Was intended for auto-extraction of inpainting masks and custom ADetailer implementation for Kandinsky, but was not finished 😔 |
 | <a id="kd-stable-cascade"></a>kd-stable-cascade | Basic [🤗 diffusers](https://github.com/huggingface/diffusers)-based implementation of [Stable Cascade](https://github.com/Stability-AI/StableCascade) T2I pipeline |
@@ -31,6 +31,7 @@ Initially, it contained only extensions that were somehow related to enhancing t
 | <a id="kd-training"></a>kd-training | GUI wrapper for some Kandinsky training scripts (K2.1 fine-tuning/K2.2 LoRA) |
 | <a id="kd-upscaler"></a>kd-upscaler | Tools for upscaling, currently only [Real-ESRGAN](https://github.com/ai-forever/Real-ESRGAN) and [KandiSuperRes](https://github.com/ai-forever/KandiSuperRes) are supported |
 | <a id="kd-video"></a>kd-video | GUI for a consumer-friendly (24Gb VRAM) implementation of [Kandinsky Video](https://github.com/ai-forever/KandinskyVideo) T2V/I2V pipelines. The low-VRAM pipeline for KV1.1 is still flawed and outputs noise 🙄 |
+| <a id="kd-video-tools"></a>kd-video-tools | Tools for working with media clips (currently only video interrogation is supported) |
 
 ## Installation
 
