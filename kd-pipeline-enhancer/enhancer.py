@@ -1,16 +1,22 @@
 import gradio as gr
 
 
-def show_freeu(kubin):
+def current_pipeline(kubin):
     model = kubin.params("general", "model_name")
     pipeline = kubin.params("general", "pipeline")
-    return model == "kd22" and pipeline == "diffusers"
+    return f"{model}-{pipeline}"
+
+
+def show_freeu(kubin):
+    return current_pipeline(kubin) == "kd22-diffusers"
 
 
 def show_samplers(kubin):
-    model = kubin.params("general", "model_name")
-    pipeline = kubin.params("general", "pipeline")
-    return model == "kd22" and pipeline == "diffusers"
+    return current_pipeline(kubin) == "kd22-diffusers"
+
+
+def show_enhance_avideo(kubin):
+    return current_pipeline(kubin) == "kd40-native"
 
 
 def enhancer_ui(kubin, target, enhancer_info):
