@@ -4,6 +4,11 @@ import gradio as gr
 from similarity_search import ImageSimilaritySearch
 import pandas as pd
 import shutil
+import torch
+from torchvision import transforms
+from torchvision.models.detection import fasterrcnn_resnet50_fpn
+
+from utils.logging import k_log
 
 title = "Image Tools"
 
@@ -12,144 +17,154 @@ def setup(kubin):
     cache_dir = kubin.params("general", "cache_dir")
 
     def image_tools_ui(ui_shared, ui_tabs):
+        current_folder = {"path": ""}
+
+        def on_image_select(image_name, results_df):
+            if results_df is None or results_df.empty or not image_name:
+                return None, None, None
+
+            try:
+                if not isinstance(results_df, pd.DataFrame):
+                    results_df = pd.DataFrame(results_df)
+
+                image_name = (
+                    os.path.basename(image_name)
+                    if os.path.sep in image_name
+                    else image_name
+                )
+                similar_images = results_df[
+                    results_df["Query Image"].astype(str) == image_name
+                ]
+
+                query_path = os.path.join(current_folder["path"], image_name)
+
+                if not os.path.exists(query_path):
+                    k_log(f"query image not found: {query_path}")
+                    return None, None, None
+
+                query_image = Image.open(query_path)
+
+                return (query_image, query_path, similar_images)
+            except Exception as e:
+                k_log(f"error in on_image_select: {str(e)}")
+                return None, None, None
+
+        def process_folder(folder_path: str, top_results: int, score_threshold: float):
+            try:
+                if not os.path.exists(folder_path):
+                    k_log(f"folder not found: {folder_path}")
+                    return [pd.DataFrame(), gr.update(choices=[], value=None)]
+
+                current_folder["path"] = folder_path
+
+                search_engine = ImageSimilaritySearch()
+                results_df = search_engine.find_similar_images_batch(
+                    folder_path, top_results, score_threshold
+                )
+
+                if not isinstance(results_df, pd.DataFrame):
+                    results_df = pd.DataFrame(results_df)
+
+                unique_images = sorted(results_df["Query Image"].unique().tolist())
+
+                image_choices = [(img, img) for img in unique_images]
+
+                print(f"{len(unique_images)} images added for review")
+                return [
+                    results_df,
+                    gr.update(choices=image_choices, value=None),
+                    gr.update(visible=True),
+                    gr.update(visible=True),
+                    len(results_df),
+                ]
+            except Exception as e:
+                print(f"Error in process_folder: {str(e)}")
+                return [
+                    pd.DataFrame(),
+                    gr.update(choices=[], value=None),
+                    gr.update(visible=False),
+                    gr.update(visible=False),
+                    0,
+                ]
+
+        def mark_as_resolved(image_name, results_df):
+            if not image_name or results_df is None or results_df.empty:
+                return results_df, None, []
+
+            new_df = results_df[
+                (results_df["Query Image"] != image_name)
+                & (results_df["Similar Image"] != image_name)
+            ]
+
+            unique_images = sorted(new_df["Query Image"].unique().tolist())
+            image_choices = [(img, img) for img in unique_images]
+            return new_df, gr.update(choices=image_choices, value=None), []
+
+        def remove_similar_image(
+            selected_gallery_item, image_name, results_df, remove_permanently
+        ):
+            if not selected_gallery_item or results_df is None or results_df.empty:
+                return results_df, []
+
+            selected_item = selected_gallery_item[0][1]
+            image_filename = selected_item.split("Path: ")[-1]
+
+            if not image_filename:
+                return results_df, []
+
+            full_path = os.path.join(current_folder["path"], image_filename)
+
+            if not remove_permanently:
+                duplicates_folder = os.path.join(current_folder["path"], "duplicates")
+                os.makedirs(duplicates_folder, exist_ok=True)
+                try:
+                    new_duplicate_path = os.path.join(duplicates_folder, image_filename)
+                    shutil.move(full_path, new_duplicate_path)
+                    k_log(f"moved duplicate image to: {new_duplicate_path}")
+                except Exception as e:
+                    k_log(f"error moving image {full_path}: {str(e)}")
+            else:
+                try:
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
+                        k_log(f"deleted image: {full_path}")
+                except Exception as e:
+                    k_log(f"error deleting image {full_path}: {str(e)}")
+
+            new_df = results_df[
+                (results_df["Query Image"] != image_name)
+                & (results_df["Similar Image"] != image_name)
+            ]
+
+            unique_images = sorted(new_df["Query Image"].unique().tolist())
+            image_choices = [(img, img) for img in unique_images]
+            return new_df, gr.update(choices=image_choices, value=None), []
+
+        def update_display(image_name, results_df):
+            selected_img, path, similar_df = on_image_select(image_name, results_df)
+
+            gallery_images = []
+            if similar_df is not None and not similar_df.empty:
+                for _, data in similar_df.iterrows():
+                    full_path = os.path.join(
+                        current_folder["path"], data["Similar Image"]
+                    )
+                    try:
+                        img = Image.open(full_path)
+                        gallery_images.append(
+                            (
+                                img,
+                                f"Score: {data['Similarity Score']}, Rank: {data['Rank']}, Path: {data['Similar Image']}",
+                            )
+                        )
+                    except Exception as e:
+                        k_log(f"Error loading image {full_path}: {str(e)}")
+
+            return [selected_img, gallery_images, path]
+
         with gr.Tabs() as image_tools_block:
             with gr.Tab("Similarity search"):
-                current_folder = {"path": ""}
-
-                def on_image_select(image_name, results_df):
-                    if results_df is None or results_df.empty or not image_name:
-                        return None, None, None
-
-                    try:
-                        if not isinstance(results_df, pd.DataFrame):
-                            results_df = pd.DataFrame(results_df)
-
-                        image_name = (
-                            os.path.basename(image_name)
-                            if os.path.sep in image_name
-                            else image_name
-                        )
-                        similar_images = results_df[
-                            results_df["Query Image"].astype(str) == image_name
-                        ]
-
-                        query_path = os.path.join(current_folder["path"], image_name)
-
-                        if not os.path.exists(query_path):
-                            print(f"Query image not found: {query_path}")
-                            return None, None, None
-
-                        query_image = Image.open(query_path)
-
-                        return (query_image, query_path, similar_images)
-                    except Exception as e:
-                        print(f"Error in on_image_select: {str(e)}")
-                        return None, None, None
-
-                def process_folder(
-                    folder_path: str, top_results: int, score_threshold: float
-                ):
-                    try:
-                        if not os.path.exists(folder_path):
-                            print(f"Folder not found: {folder_path}")
-                            return [pd.DataFrame(), gr.update(choices=[], value=None)]
-
-                        current_folder["path"] = folder_path
-
-                        search_engine = ImageSimilaritySearch()
-                        results_df = search_engine.find_similar_images_batch(
-                            folder_path, top_results, score_threshold
-                        )
-
-                        if not isinstance(results_df, pd.DataFrame):
-                            results_df = pd.DataFrame(results_df)
-
-                        unique_images = sorted(
-                            results_df["Query Image"].unique().tolist()
-                        )
-
-                        image_choices = [(img, img) for img in unique_images]
-
-                        print(f"{len(unique_images)} images added for review")
-                        return [
-                            results_df,
-                            gr.update(choices=image_choices, value=None),
-                            gr.update(visible=True),
-                            gr.update(visible=True),
-                            len(results_df),
-                        ]
-                    except Exception as e:
-                        print(f"Error in process_folder: {str(e)}")
-                        return [
-                            pd.DataFrame(),
-                            gr.update(choices=[], value=None),
-                            gr.update(visible=False),
-                            gr.update(visible=False),
-                            0,
-                        ]
-
-                def mark_as_resolved(image_name, results_df):
-                    if not image_name or results_df is None or results_df.empty:
-                        return results_df, None, []
-
-                    new_df = results_df[
-                        (results_df["Query Image"] != image_name)
-                        & (results_df["Similar Image"] != image_name)
-                    ]
-
-                    unique_images = sorted(new_df["Query Image"].unique().tolist())
-                    image_choices = [(img, img) for img in unique_images]
-                    return new_df, gr.update(choices=image_choices, value=None), []
-
-                def remove_similar_image(
-                    selected_gallery_item, image_name, results_df, remove_permanently
-                ):
-                    if (
-                        not selected_gallery_item
-                        or results_df is None
-                        or results_df.empty
-                    ):
-                        return results_df, []
-
-                    selected_item = selected_gallery_item[0][1]
-                    image_filename = selected_item.split("Path: ")[-1]
-
-                    if not image_filename:
-                        return results_df, []
-
-                    full_path = os.path.join(current_folder["path"], image_filename)
-
-                    if not remove_permanently:
-                        duplicates_folder = os.path.join(
-                            current_folder["path"], "duplicates"
-                        )
-                        os.makedirs(duplicates_folder, exist_ok=True)
-                        try:
-                            new_duplicate_path = os.path.join(
-                                duplicates_folder, image_filename
-                            )
-                            shutil.move(full_path, new_duplicate_path)
-                            print(f"Moved duplicate image to: {new_duplicate_path}")
-                        except Exception as e:
-                            print(f"Error moving image {full_path}: {str(e)}")
-                    else:
-                        try:
-                            if os.path.exists(full_path):
-                                os.remove(full_path)
-                                print(f"Deleted image: {full_path}")
-                        except Exception as e:
-                            print(f"Error deleting image {full_path}: {str(e)}")
-
-                    new_df = results_df[
-                        (results_df["Query Image"] != image_name)
-                        & (results_df["Similar Image"] != image_name)
-                    ]
-
-                    unique_images = sorted(new_df["Query Image"].unique().tolist())
-                    image_choices = [(img, img) for img in unique_images]
-                    return new_df, gr.update(choices=image_choices, value=None), []
-
-                with gr.Blocks() as similarity_block:
+                with gr.Blocks():
                     with gr.Row():
                         folder_input = gr.Text(
                             scale=4,
@@ -224,32 +239,10 @@ def setup(kubin):
 
                         similar_images.elem_classes = ["kd-similarity-similar-images"]
 
-                    def update_display(image_name, results_df):
-                        selected_img, path, similar_df = on_image_select(
-                            image_name, results_df
-                        )
-
-                        gallery_images = []
-                        if similar_df is not None and not similar_df.empty:
-                            for _, data in similar_df.iterrows():
-                                full_path = os.path.join(
-                                    current_folder["path"], data["Similar Image"]
-                                )
-                                try:
-                                    img = Image.open(full_path)
-                                    gallery_images.append(
-                                        (
-                                            img,
-                                            f"Score: {data['Similarity Score']}, Rank: {data['Rank']}, Path: {data['Similar Image']}",
-                                        )
-                                    )
-                                except Exception as e:
-                                    print(f"Error loading image {full_path}: {str(e)}")
-
-                        return [selected_img, gallery_images, path]
-
                     result_length = gr.Number(-1, visible=False)
-                    process_btn.click(
+
+                    kubin.ui_utils.click_and_disable(
+                        process_btn,
                         fn=process_folder,
                         inputs=[folder_input, top_images, score_threshold],
                         outputs=[
@@ -258,6 +251,10 @@ def setup(kubin):
                             similar_images,
                             folder_input,
                             result_length,
+                        ],
+                        js=[
+                            f"args => kubin.UI.taskStarted('{title}')",
+                            f"args => kubin.UI.taskFinished('{title}')",
                         ],
                     ).then(
                         fn=None,
@@ -292,6 +289,160 @@ def setup(kubin):
                         ],
                         outputs=[results_store, image_selector, similar_images_gallery],
                     )
+
+            crop_model = None
+
+            def load_model():
+                nonlocal crop_model
+                if crop_model is None:
+                    crop_model = fasterrcnn_resnet50_fpn(
+                        pretrained=True, cache_dir=cache_dir
+                    )
+                    crop_model.eval()
+                return crop_model
+
+            def crop_resize_with_scene(image, target_width, target_height):
+                model = load_model()
+                transform = transforms.Compose([transforms.ToTensor()])
+
+                with torch.no_grad():
+                    detections = model(transform(image).unsqueeze(0))[0]
+
+                boxes = detections["boxes"]
+                scores = detections["scores"]
+                valid_boxes = boxes[scores > 0.5]
+
+                orig_width, orig_height = image.size
+
+                if len(valid_boxes) > 0:
+                    x_min = int(torch.min(valid_boxes[:, 0]).item())
+                    y_min = int(torch.min(valid_boxes[:, 1]).item())
+                    x_max = int(torch.max(valid_boxes[:, 2]).item())
+                    y_max = int(torch.max(valid_boxes[:, 3]).item())
+                    center_x = (x_min + x_max) // 2
+                    center_y = (y_min + y_max) // 2
+                else:
+                    center_x = orig_width // 2
+                    center_y = orig_height // 2
+
+                half_width = target_width // 2
+                half_height = target_height // 2
+
+                left = center_x - half_width
+                top = center_y - half_height
+                right = center_x + half_width
+                bottom = center_y + half_height
+
+                if left < 0:
+                    center_x += abs(left)
+                elif right > orig_width:
+                    center_x -= right - orig_width
+
+                if top < 0:
+                    center_y += abs(top)
+                elif bottom > orig_height:
+                    center_y -= bottom - orig_height
+
+                left = max(0, min(orig_width - target_width, center_x - half_width))
+                top = max(0, min(orig_height - target_height, center_y - half_height))
+                right = left + target_width
+                bottom = top + target_height
+
+                return image.crop((left, top, right, bottom))
+
+            def process_image_or_folder(image, folder_path, width, height):
+                processed_gallery = []
+
+                if folder_path:
+                    folder_path = folder_path.strip()
+                    if not os.path.exists(folder_path):
+                        print(f"Folder not found: {folder_path}")
+                        yield None, []
+                        return
+
+                    cropped_dir = os.path.join(folder_path, "cropped")
+                    os.makedirs(cropped_dir, exist_ok=True)
+
+                    valid_exts = {".jpg", ".jpeg", ".png", ".bmp", ".gif"}
+                    file_list = sorted(
+                        f
+                        for f in os.listdir(folder_path)
+                        if os.path.splitext(f)[1].lower() in valid_exts
+                    )
+
+                    for filename in file_list:
+                        full_path = os.path.join(folder_path, filename)
+                        try:
+                            img = Image.open(full_path)
+                            cropped = crop_resize_with_scene(img, width, height)
+                            cropped_filename = f"cropped_{filename}"
+                            cropped_path = os.path.join(cropped_dir, cropped_filename)
+                            cropped.save(cropped_path)
+
+                            processed_gallery.append((cropped, f"Cropped: {filename}"))
+                            yield cropped, processed_gallery
+
+                        except Exception as e:
+                            k_log(f"Error processing {full_path}: {str(e)}")
+
+                    return
+
+                if image is None:
+                    yield None, []
+                    return
+
+                cropped_img = crop_resize_with_scene(image, width, height)
+                processed_gallery = [(cropped_img, "Cropped single image")]
+
+                yield cropped_img, processed_gallery
+
+            with gr.Tab("Semantic crop"):
+                with gr.Row():
+                    crop_image_input = gr.Image(
+                        type="pil",
+                        label="Single Image (ignored if folder path is used)",
+                    )
+
+                    with gr.Column():
+                        crop_width = gr.Slider(
+                            100, 2000, value=1024, step=1, label="Target width"
+                        )
+                        crop_height = gr.Slider(
+                            100, 2000, value=1024, step=1, label="Target height"
+                        )
+                        crop_btn = gr.Button("Process Image(s)")
+                        folder_input_crop = gr.Text(
+                            label="Folder path (optional)",
+                            placeholder="If set, all images in this folder will be processed",
+                        )
+
+                    current_image = gr.Image(label="Currently Processed Image")
+
+                with gr.Row():
+                    cropped_gallery = gr.Gallery(
+                        label="Cropped Results (accumulated)", columns=5, height="auto"
+                    )
+
+                kubin.ui_utils.click_and_disable(
+                    crop_btn,
+                    fn=process_image_or_folder,
+                    inputs=[
+                        crop_image_input,
+                        folder_input_crop,
+                        crop_width,
+                        crop_height,
+                    ],
+                    outputs=[current_image, cropped_gallery],
+                    js=[
+                        f"args => kubin.UI.taskStarted('{title}')",
+                        f"args => kubin.UI.taskFinished('{title}')",
+                    ],
+                ).then(
+                    fn=None,
+                    _js='() => (kubin.notify.success("Cropping finished"))',
+                    inputs=[],
+                    outputs=[],
+                )
 
         return image_tools_block
 

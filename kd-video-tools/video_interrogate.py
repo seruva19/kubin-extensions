@@ -10,22 +10,11 @@ from transformers.generation import GenerationMixin
 import types
 
 
-def interrogate_single_image(
-    kubin,
-    state,
-    cache_dir,
-    device,
-    model_name,
-    quantization,
-    input_video,
-    input_prompt,
-    prepended="",
-    appended="",
-):
-    model_id = state["name"]
-    model = state["model"]
+def init_interrogate_fn(kubin, state, cache_dir, device, model_name, quantization):
+    current_model = state["model"]
+    current_model_name = state["name"]
 
-    if model is None or model_name != model_id:
+    if current_model is None or model_name != current_model_name:
         flush(kubin, state)
 
         if model_name == "THUDM/cogvlm2-video-llama3-chat":
@@ -35,7 +24,6 @@ def interrogate_single_image(
                 trust_remote_code=True,
                 cache_dir=cache_dir,
             )
-            tokenizer = state["tokenizer"]
 
             q_conf = None
             if quantization == "none":
@@ -58,20 +46,20 @@ def interrogate_single_image(
                 cache_dir=cache_dir,
                 quantization_config=q_conf,
             )
-            model_name = state["model"]
-            model_name.eval()
-            if q_conf is None:
-                model_name.to(device)
 
-            def interrogate(in_video, prompt):
+            state["model"].eval()
+            if q_conf is None:
+                state["model"].to(device)
+
+            def interrogate(video_path, prompt):
                 strategy = "chat"
-                video = load_video(in_video, strategy=strategy)
+                video = load_video(video_path, strategy=strategy)
 
                 history = []
                 query = prompt
                 temperature = 0.2
-                inputs = model_name.build_conversation_input_ids(
-                    tokenizer=tokenizer,
+                inputs = state["model"].build_conversation_input_ids(
+                    tokenizer=state["tokenizer"],
                     query=query,
                     images=[video],
                     history=history,
@@ -106,22 +94,21 @@ def interrogate_single_image(
                 }
 
                 with torch.no_grad():
-                    outputs = model_name.generate(**inputs, **gen_kwargs)
+                    outputs = state["model"].generate(**inputs, **gen_kwargs)
                     outputs = outputs[:, inputs["input_ids"].shape[1] :]
-                    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+                    response = state["tokenizer"].decode(
+                        outputs[0], skip_special_tokens=True
+                    )
                     return response
 
             state["fn"] = interrogate
-        else:
-            pass
-
-    return prepended + state["fn"](input_video, input_prompt) + appended
 
 
 def flush(kubin, now):
     if now["model"] is not None:
         now["model"].to("cpu")
-        del now["tokenizer"]
+        now["model"] = None
+        now["tokenizer"] = None
 
     kubin.model.flush(None)
 
