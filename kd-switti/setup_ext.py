@@ -16,13 +16,21 @@ dir = Path(__file__).parent.absolute()
 
 
 def setup(kubin):
-    switti_model = {"pipe": None}
+    switti_model = {"pipe": None, "model_id": None}
 
     def switti_ui(ui_shared, ui_tabs):
         with gr.Row() as switti_block:
             with gr.Tab(label="Inference"):
                 with gr.Row():
                     with gr.Column(scale=2) as switti_params_block:
+                        with gr.Row():
+                            model_id = gr.Dropdown(
+                                value="yresearch/Switti-1024",
+                                choices=[
+                                    "yresearch/Switti",
+                                    "yresearch/Switti-1024",
+                                ],
+                            )
                         with gr.Row():
                             prompt = gr.TextArea(
                                 value="Cute winter dragon baby, kawaii, Pixar, ultra detailed, glacial background, extremely realistic",
@@ -50,7 +58,7 @@ def setup(kubin):
                             width = gr.Slider(
                                 256,
                                 4096,
-                                512,
+                                1024,
                                 step=64,
                                 label="Width",
                                 interactive=False,
@@ -58,7 +66,7 @@ def setup(kubin):
                             height = gr.Slider(
                                 256,
                                 4096,
-                                512,
+                                1024,
                                 step=64,
                                 label="Height",
                                 interactive=False,
@@ -87,7 +95,7 @@ def setup(kubin):
                             )
 
                         with gr.Row():
-                            with gr.Accordion("Utilities", open=False):
+                            with gr.Accordion("System", open=False):
                                 flush_btn = gr.Button(
                                     "Release VRAM", variant="secondary", scale=1
                                 )
@@ -122,12 +130,25 @@ def setup(kubin):
                             switti_output, "switti-output", ui_tabs
                         )
 
+                    model_id.change(
+                        fn=lambda model_id: [
+                            1024 if model_id.endswith("1024") else 512,
+                            1024 if model_id.endswith("1024") else 512,
+                        ],
+                        inputs=[model_id],
+                        outputs=[
+                            width,
+                            height,
+                        ],
+                    )
+
                     kubin.ui_utils.click_and_disable(
                         generate_btn,
                         fn=lambda *params: generate_switti(
                             kubin, switti_model, *params
                         ),
                         inputs=[
+                            model_id,
                             prompt,
                             negative_prompt,
                             seed,
@@ -170,13 +191,12 @@ def setup(kubin):
     }
 
 
-def init_model(kubin, switti_model, device, cache_dir):
+def init_model(kubin, switti_model, device, cache_dir, model_id):
     sys.path.append(os.path.join("extensions", "kd-switti", "switti"))
     from switti.models import SwittiPipeline
 
-    model_path = "yresearch/Switti"
     pipe = SwittiPipeline.from_pretrained(
-        model_path, torch_dtype=torch.bfloat16, device=device
+        model_id, torch_dtype=torch.bfloat16, device=device
     )
 
     switti_model["pipe"] = pipe
@@ -186,6 +206,7 @@ def init_model(kubin, switti_model, device, cache_dir):
 def generate_switti(
     kubin,
     switti_model,
+    model_id,
     prompt,
     negative_prompt,
     seed,
@@ -203,10 +224,11 @@ def generate_switti(
     cache_dir,
     output_dir,
 ):
-
+    switti_id = switti_model.get("model_id", None)
     switti_pipe = switti_model.get("pipe", None)
-    if switti_pipe is None:
-        switti_pipe = init_model(kubin, switti_model, device, cache_dir)
+    if switti_pipe is None or switti_id != model_id:
+        flush(switti_model, kubin)
+        switti_pipe = init_model(kubin, switti_model, device, cache_dir, model_id)
 
     images = switti_pipe(
         prompt=prompt,
@@ -219,7 +241,7 @@ def generate_switti(
         turn_on_cfg_start_si=turn_on_cfg_start_si,
         turn_off_cfg_start_si=turn_off_cfg_start_si,
         last_scale_temp=last_scale_temp,
-        image_size=(width, height),
+        # image_size=(width, height),
         seed=seed,
     )
 
@@ -254,7 +276,7 @@ def flush(switti_model, kubin):
 
 def mount(kubin):
     switti_repo = "https://github.com/yandex-research/switti"
-    commit = "0f2dbf5"
+    commit = "d93ee3f"
     destination_dir = "extensions/kd-switti/switti"
 
     if not os.path.exists(destination_dir):
@@ -263,9 +285,9 @@ def mount(kubin):
         temp_dir = tempfile.mkdtemp()
         temp_switti = os.path.join(temp_dir, "temp_switti")
 
-        subprocess.run(["git", "clone", switti_repo, temp_switti, "-q"])
+        subprocess.run(["git", "clone", switti_repo, temp_switti])
         os.chdir(temp_switti)
-        subprocess.run(["git", "checkout", commit, "-q"])
+        subprocess.run(["git", "checkout", commit])
         os.chdir(current_path)
 
         if not os.path.exists(destination_dir):

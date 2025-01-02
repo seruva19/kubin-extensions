@@ -61,9 +61,9 @@ def setup(kubin):
                     if filename.endswith(tuple(clip_types)):
                         relevant_clips.append(f"{clip_dir}/{filename}")
 
-            print(f"found {len(relevant_clips)} images to interrogate")
+            print(f"found {len(relevant_clips)} files to interrogate")
             for image_count, filepath in enumerate(
-                progress.tqdm(relevant_clips, unit="videos")
+                progress.tqdm(relevant_clips, unit="files")
             ):
                 base_name, _ = os.path.splitext(filepath)
 
@@ -136,6 +136,7 @@ def setup(kubin):
                                 quantization,
                                 input_video,
                                 model_prompt,
+                                gr.State(None),
                                 gr.State(None),
                                 gr.State(None),
                                 gr.State(None),
