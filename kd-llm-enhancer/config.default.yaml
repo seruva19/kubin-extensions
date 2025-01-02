@@ -17,8 +17,8 @@ tasks:
       Split actions to subactions.
       DO NOT USE NUMBERED LISTS.
       The prompt is: {prompt}.'
-    default: 'You are a prompt engineer. Your mission is to expand prompts written
-      by user. You should provide the best prompt for text to image generation in
-      English. The prompt is: {prompt}. Important: only output text of transformed prompt, do not output anything else before and after it.'
+    default: 'You are a prompt engineer.
+    Your mission is to expand prompts written by user. You should provide the best prompt for text to image generation in English.
+    The prompt is: {prompt}. Only output prompt without additional comments.'
 
   
