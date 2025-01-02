@@ -1,0 +1,8 @@
+.folder-interrogation-progress .wrap {
+    overflow: visible;
+}
+
+.folder-interrogation-progress .progress-text {
+    width: 100%;
+    margin-top: 30px;
+}

@@ -1,4 +1,5 @@
 import io
+import os
 import numpy as np
 from torch import dtype
 import torch
@@ -8,6 +9,7 @@ from decord import cpu, VideoReader, bridge
 import transformers
 from transformers.generation import GenerationMixin
 import types
+from apollo_inference import APOLLO_MODEL_ID, init_apollo
 
 
 def init_interrogate_fn(kubin, state, cache_dir, device, model_name, quantization):
@@ -50,8 +52,14 @@ def init_interrogate_fn(kubin, state, cache_dir, device, model_name, quantizatio
             state["model"].eval()
             if q_conf is None:
                 state["model"].to(device)
+                state["q"] = None
+            else:
+                state["q"] = q_conf
 
             def interrogate(video_path, prompt):
+                if not video_path.endswith(".mp4"):
+                    return "Only mp4 videos are supported."
+
                 strategy = "chat"
                 video = load_video(video_path, strategy=strategy)
 
@@ -103,12 +111,18 @@ def init_interrogate_fn(kubin, state, cache_dir, device, model_name, quantizatio
 
             state["fn"] = interrogate
 
+        elif model_name == APOLLO_MODEL_ID:
+            init_apollo(state, device, cache_dir, quantization)
+        else:
+            raise ValueError(f"unknown model name: {model_name}")
 
-def flush(kubin, now):
-    if now["model"] is not None:
-        now["model"].to("cpu")
-        now["model"] = None
-        now["tokenizer"] = None
+
+def flush(kubin, state):
+    if state["model"] is not None:
+        if state["q"] is None:
+            state["model"].to("cpu")
+            state["model"] = None
+            state["tokenizer"] = None
 
     kubin.model.flush(None)
 

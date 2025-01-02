@@ -1,7 +1,7 @@
 import os
-import cv2
 import gradio as gr
 from video_interrogate import init_interrogate_fn
+from apollo_inference import APOLLO_MODEL_ID
 
 title = "Video Tools"
 
@@ -14,7 +14,7 @@ def setup(kubin):
         source="upload",
         label="Input video",
     )
-    now = {"model": None, "tokenizer": None, "name": None, "fn": None}
+    now = {"model": None, "tokenizer": None, "name": None, "fn": None, "q": None}
 
     def interrogate(
         model_name,
@@ -25,6 +25,7 @@ def setup(kubin):
         clip_types,
         caption_extension,
         skip_existing,
+        include_subdirectories,
         progress=gr.Progress(),
     ):
         prepended, appended = "", ""
@@ -50,9 +51,15 @@ def setup(kubin):
             if not os.path.exists(clip_dir):
                 return f"Error: folder {clip_dir} does not exists"
 
-            for filename in os.listdir(clip_dir):
-                if filename.endswith(tuple(clip_types)):
-                    relevant_clips.append(f"{clip_dir}/{filename}")
+            if include_subdirectories:
+                for root, dirnames, filenames in os.walk(clip_dir):
+                    for filename in filenames:
+                        if filename.endswith(tuple(clip_types)):
+                            relevant_clips.append(f"{root}/{filename}")
+            else:
+                for filename in os.listdir(clip_dir):
+                    if filename.endswith(tuple(clip_types)):
+                        relevant_clips.append(f"{clip_dir}/{filename}")
 
             print(f"found {len(relevant_clips)} images to interrogate")
             for image_count, filepath in enumerate(
@@ -81,7 +88,10 @@ def setup(kubin):
                     with gr.Row():
                         with gr.Column():
                             video_model = gr.Dropdown(
-                                choices=["THUDM/cogvlm2-video-llama3-chat"],
+                                choices=[
+                                    "THUDM/cogvlm2-video-llama3-chat",
+                                    APOLLO_MODEL_ID,
+                                ],
                                 value="THUDM/cogvlm2-video-llama3-chat",
                                 label="Model",
                             )
@@ -143,9 +153,10 @@ def setup(kubin):
 
                     with gr.Row():
                         clip_types = gr.CheckboxGroup(
-                            [".mp4"],
+                            [".mp4", ".jpg", ".png"],
                             value=[".mp4"],
-                            label="Videos to interrogate",
+                            label="Files to interrogate",
+                            info="Images will be treated as single-frame videos",
                         )
 
                     with gr.Row():
@@ -159,6 +170,10 @@ def setup(kubin):
                             skip_existing = gr.Checkbox(
                                 False,
                                 label="Overwrite existing",
+                            )
+                            include_subdirectories = gr.Checkbox(
+                                False,
+                                label="Include all subdirectories",
                             )
 
                     folder_interrogate_btn = gr.Button("Interrogate", variant="primary")
@@ -179,6 +194,7 @@ def setup(kubin):
                             clip_types,
                             caption_extension,
                             skip_existing,
+                            include_subdirectories,
                         ],
                         outputs=[fake_element, progress],
                         js=[
