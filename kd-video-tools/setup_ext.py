@@ -2,6 +2,7 @@ import os
 import gradio as gr
 from video_interrogate import init_interrogate_fn
 from apollo_inference import APOLLO_MODEL_ID
+from llava_onevision import LLAVA_MODEL_ID
 
 title = "Video Tools"
 
@@ -19,6 +20,7 @@ def setup(kubin):
     def interrogate(
         model_name,
         quantization,
+        use_flash_attention,
         video,
         prompt,
         clip_dir,
@@ -37,6 +39,7 @@ def setup(kubin):
             device=kubin.params("general", "device"),
             model_name=model_name,
             quantization=quantization,
+            use_flash_attention=use_flash_attention,
         )
 
         interrogate_fn = now["fn"]
@@ -91,6 +94,7 @@ def setup(kubin):
                                 choices=[
                                     "THUDM/cogvlm2-video-llama3-chat",
                                     APOLLO_MODEL_ID,
+                                    LLAVA_MODEL_ID,
                                 ],
                                 value="THUDM/cogvlm2-video-llama3-chat",
                                 label="Model",
@@ -106,11 +110,17 @@ def setup(kubin):
                                 label="Prompt",
                             )
 
-                            quantization = gr.Dropdown(
-                                value="int8",
-                                choices=["none", "int8", "nf4"],
-                                label="Quantization",
-                            )
+                            with gr.Row():
+                                quantization = gr.Dropdown(
+                                    value="int8",
+                                    choices=["none", "int8", "nf4"],
+                                    label="Quantization",
+                                )
+
+                                use_flash_attention = gr.Checkbox(
+                                    False,
+                                    label="Use FlashAttention",
+                                )
 
             with gr.Column(scale=1):
                 fake_element = gr.Textbox(visible=False)
@@ -134,6 +144,7 @@ def setup(kubin):
                             inputs=[
                                 video_model,
                                 quantization,
+                                use_flash_attention,
                                 input_video,
                                 model_prompt,
                                 gr.State(None),
@@ -189,6 +200,7 @@ def setup(kubin):
                         inputs=[
                             video_model,
                             quantization,
+                            use_flash_attention,
                             input_video,
                             model_prompt,
                             clip_dir,

@@ -10,9 +10,12 @@ import transformers
 from transformers.generation import GenerationMixin
 import types
 from apollo_inference import APOLLO_MODEL_ID, init_apollo
+from llava_onevision import LLAVA_MODEL_ID, init_llava
 
 
-def init_interrogate_fn(kubin, state, cache_dir, device, model_name, quantization):
+def init_interrogate_fn(
+    kubin, state, cache_dir, device, model_name, quantization, use_flash_attention
+):
     current_model = state["model"]
     current_model_name = state["name"]
 
@@ -113,6 +116,8 @@ def init_interrogate_fn(kubin, state, cache_dir, device, model_name, quantizatio
 
         elif model_name == APOLLO_MODEL_ID:
             init_apollo(state, device, cache_dir, quantization)
+        elif model_name == LLAVA_MODEL_ID:
+            init_llava(state, device, cache_dir, quantization, use_flash_attention)
         else:
             raise ValueError(f"unknown model name: {model_name}")
 
