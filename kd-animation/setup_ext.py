@@ -4,7 +4,7 @@ import tempfile
 import gradio as gr
 import os
 
-title = "Animation"
+title = "Deforum"
 
 
 def setup(kubin):

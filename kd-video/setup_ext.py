@@ -10,7 +10,7 @@ from pathlib import Path
 from transformers import T5Model, T5Tokenizer, CLIPImageProcessor
 from torch import nn
 
-title = "Video"
+title = "Animation"
 dir = Path(__file__).parent.absolute()
 
 from kandinsky_video31 import kdv11_create_video

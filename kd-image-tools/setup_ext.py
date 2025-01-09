@@ -151,16 +151,20 @@ def setup(kubin):
                     )
                     try:
                         img = Image.open(full_path)
+                        width, height = img.size  # Get image resolution
                         gallery_images.append(
                             (
                                 img,
-                                f"Score: {data['Similarity Score']}, Rank: {data['Rank']}, Path: {data['Similar Image']}",
+                                f"Score: {data['Similarity Score']}, Rank: {data['Rank']}, "
+                                f"Resolution: {width}x{height}, Path: {data['Similar Image']}",
                             )
                         )
                     except Exception as e:
                         k_log(f"Error loading image {full_path}: {str(e)}")
 
-            return [selected_img, gallery_images, path]
+            width, height = selected_img.size
+            selected_image_info = f"Resolution: {width}x{height}"
+            return [selected_img, selected_image_info, gallery_images, path]
 
         with gr.Tabs() as image_tools_block:
             with gr.Tab("Similarity search"):
@@ -221,6 +225,9 @@ def setup(kubin):
                                     selected_image = gr.Image(
                                         type="pil", label="Source image"
                                     )
+                                    selected_image_info = gr.Label(
+                                        "", label="Image info"
+                                    )
                                     resolve_btn = gr.Button(
                                         "Mark as Resolved", variant="primary"
                                     )
@@ -268,6 +275,7 @@ def setup(kubin):
                         inputs=[image_selector, results_store],
                         outputs=[
                             selected_image,
+                            selected_image_info,
                             similar_images_gallery,
                             selected_image_path,
                         ],
