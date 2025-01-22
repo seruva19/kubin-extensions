@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers import BitsAndBytesConfig
-from transformers import AutoProcessor, LlavaOnevisionForConditionalGeneration
+
 import av
 
 from huggingface_hub import snapshot_download
@@ -12,6 +12,8 @@ LLAVA_MODEL_ID = "llava-hf/llava-onevision-qwen2-7b-ov-hf"
 
 
 def init_llava(state, device, cache_dir, quantization, use_flash_attention):
+    from transformers import AutoProcessor, LlavaOnevisionForConditionalGeneration
+
     state["name"] = LLAVA_MODEL_ID
 
     q_conf = None
