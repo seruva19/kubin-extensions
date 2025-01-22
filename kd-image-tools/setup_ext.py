@@ -19,6 +19,87 @@ def setup(kubin):
     def image_tools_ui(ui_shared, ui_tabs):
         current_folder = {"path": ""}
 
+        def group_similar_files(
+            folder_path: str, top_results: int, score_threshold: float
+        ):
+            try:
+                if not os.path.exists(folder_path):
+                    k_log(f"folder not found: {folder_path}")
+                    return "Folder not found"
+
+                search_engine = ImageSimilaritySearch()
+                results_df = search_engine.find_similar_images_batch(
+                    folder_path, top_results, score_threshold
+                )
+
+                if not isinstance(results_df, pd.DataFrame):
+                    results_df = pd.DataFrame(results_df)
+
+                grouped_dir = os.path.join(folder_path, "grouped_similar")
+                os.makedirs(grouped_dir, exist_ok=True)
+
+                processed_images = set()
+                group_counter = 1
+
+                for _, row in results_df.iterrows():
+                    query_img = row["Query Image"]
+                    similar_img = row["Similar Image"]
+
+                    if (
+                        query_img in processed_images
+                        and similar_img in processed_images
+                    ):
+                        continue
+
+                    if query_img not in processed_images:
+                        group_folder = os.path.join(
+                            grouped_dir, f"similar_group_{group_counter}"
+                        )
+                        os.makedirs(group_folder, exist_ok=True)
+
+                        query_path = os.path.join(folder_path, query_img)
+                        if os.path.exists(query_path):
+                            shutil.move(
+                                query_path, os.path.join(group_folder, query_img)
+                            )
+                            processed_images.add(query_img)
+                            k_log(f"Moved {query_img} to group {group_counter}")
+
+                        similar_path = os.path.join(folder_path, similar_img)
+                        if (
+                            os.path.exists(similar_path)
+                            and similar_img not in processed_images
+                        ):
+                            shutil.move(
+                                similar_path, os.path.join(group_folder, similar_img)
+                            )
+                            processed_images.add(similar_img)
+                            k_log(f"Moved {similar_img} to group {group_counter}")
+
+                        group_counter += 1
+
+                ungrouped_dir = os.path.join(grouped_dir, "ungrouped")
+                os.makedirs(ungrouped_dir, exist_ok=True)
+
+                valid_exts = {".jpg", ".jpeg", ".png", ".bmp", ".gif"}
+                for filename in os.listdir(folder_path):
+                    if (
+                        os.path.splitext(filename)[1].lower() in valid_exts
+                        and filename not in processed_images
+                    ):
+                        file_path = os.path.join(folder_path, filename)
+                        if os.path.isfile(file_path):
+                            shutil.move(
+                                file_path, os.path.join(ungrouped_dir, filename)
+                            )
+                            k_log(f"Moved {filename} to ungrouped folder")
+
+                return f"Successfully moved similar images into {group_counter-1} groups, remaining images moved to 'ungrouped' folder"
+            except Exception as e:
+                error_msg = f"Error in group_similar_files: {str(e)}"
+                k_log(error_msg)
+                return error_msg
+
         def on_image_select(image_name, results_df):
             if results_df is None or results_df.empty or not image_name:
                 return None, None, None
@@ -200,7 +281,23 @@ def setup(kubin):
                                 label="Remove duplicates permanently",
                             )
 
-                        process_btn = gr.Button("Process Images")
+                        with gr.Column():
+                            process_btn = gr.Button("Process Images")
+                            group_btn = gr.Button("Group into folders")
+
+                    grouping_result = gr.Text(
+                        label="Grouping Result", interactive=False, visible=True
+                    )
+                    kubin.ui_utils.click_and_disable(
+                        group_btn,
+                        fn=group_similar_files,
+                        inputs=[folder_input, top_images, score_threshold],
+                        outputs=[grouping_result],
+                        js=[
+                            f"args => kubin.UI.taskStarted('{title}')",
+                            f"args => kubin.UI.taskFinished('{title}')",
+                        ],
+                    )
 
                     results_store = gr.State()
                     selected_image_path = gr.State()
