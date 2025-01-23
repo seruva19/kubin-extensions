@@ -1,11 +1,11 @@
 import gradio as gr
 import os
-import gradio as gr
 from video_interrogate import init_interrogate_fn
 from apollo_inference import APOLLO_MODEL_ID
 from llava_onevision import LLAVA_MODEL_ID
 from videochat_flash import VIDEOCHAT_MODEL_ID
-from minicpm_v26 import MINICPM_MODEL_ID, init_minicpm
+from minicpm_v26 import MINICPM_MODEL_ID
+from videollama3 import VIDEOLLAMA3_MODEL_ID
 
 
 def interrogator_block(kubin, title, input_video):
@@ -89,6 +89,7 @@ def interrogator_block(kubin, title, input_video):
                     APOLLO_MODEL_ID,
                     LLAVA_MODEL_ID,
                     VIDEOCHAT_MODEL_ID,
+                    VIDEOLLAMA3_MODEL_ID,
                 ],
                 value="THUDM/cogvlm2-video-llama3-chat",
                 label="Model",

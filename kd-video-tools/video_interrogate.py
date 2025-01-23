@@ -13,6 +13,7 @@ from apollo_inference import APOLLO_MODEL_ID, init_apollo
 from llava_onevision import LLAVA_MODEL_ID, init_llava
 from videochat_flash import VIDEOCHAT_MODEL_ID, init_videochat
 from minicpm_v26 import MINICPM_MODEL_ID, init_minicpm
+from videollama3 import VIDEOLLAMA3_MODEL_ID, init_videollama3
 
 
 def init_interrogate_fn(
@@ -124,6 +125,11 @@ def init_interrogate_fn(
             init_llava(state, device, cache_dir, quantization, use_flash_attention)
         elif model_name == VIDEOCHAT_MODEL_ID:
             init_videochat(state, device, cache_dir, quantization)
+        elif model_name == VIDEOLLAMA3_MODEL_ID:
+            init_videollama3(
+                state, device, cache_dir, quantization, use_flash_attention
+            )
+
         else:
             raise ValueError(f"unknown model name: {model_name}")
 
