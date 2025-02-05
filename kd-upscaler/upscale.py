@@ -5,6 +5,7 @@ import torch
 
 from upscaler_default import upscale_resrgan
 from upscaler_kandisr import upscale_kdsr
+from upscaler_aurasr import upscale_aura
 
 
 def upscale_with(
@@ -34,6 +35,16 @@ def upscale_with(
 
     elif upscaler == "KandiSuperRes":
         upscaled_image = upscale_kdsr(
+            kubin, device, cache_dir, input_image, steps, batch_size, seed
+        )
+        upscaled_image_path = kubin.fs_utils.save_output(
+            os.path.join(output_dir, "upscale"), [upscaled_image]
+        )
+
+        return upscaled_image_path
+
+    elif upscaler == "AuraSR-v2":
+        upscaled_image = upscale_aura(
             device, cache_dir, input_image, steps, batch_size, seed
         )
         upscaled_image_path = kubin.fs_utils.save_output(

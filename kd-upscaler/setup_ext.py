@@ -29,6 +29,7 @@ def setup(kubin):
                         [
                             "Default (Real-ESRGAN)",
                             "KandiSuperRes",
+                            "AuraSR-v2",
                             # "ESRGAN"
                         ],
                         value="Default (Real-ESRGAN)",
@@ -59,17 +60,37 @@ def setup(kubin):
                             label="View batch size",
                             elem_classes=["inline-flex"],
                         )
+                    with gr.Row(visible=False) as aura_upscaler_params:
+                        pass
 
                     def on_method_select(upscaler_method):
                         if upscaler_method == "Default (Real-ESRGAN)":
-                            return [gr.update(visible=True), gr.update(visible=False)]
+                            return [
+                                gr.update(visible=True),
+                                gr.update(visible=False),
+                                gr.update(visible=False),
+                            ]
                         elif upscaler_method == "KandiSuperRes":
-                            return [gr.update(visible=False), gr.update(visible=True)]
+                            return [
+                                gr.update(visible=False),
+                                gr.update(visible=True),
+                                gr.update(visible=False),
+                            ]
+                        elif upscaler_method == "AuraSR-v2":
+                            return [
+                                gr.update(visible=False),
+                                gr.update(visible=False),
+                                gr.update(visible=True),
+                            ]
 
                     upscaler.change(
                         fn=on_method_select,
                         inputs=upscaler,
-                        outputs=[default_upscaler_params, kdsr_upscaler_params],
+                        outputs=[
+                            default_upscaler_params,
+                            kdsr_upscaler_params,
+                            aura_upscaler_params,
+                        ],
                     )
 
                 with gr.Row():

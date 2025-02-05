@@ -110,16 +110,20 @@ def setup(kubin):
             vlm_model_id = model_id
 
             if vlm_model_id == "vikhyatk/moondream2":
+                dir = kubin.env_utils.load_env_value(
+                    "MOONDREAM2_VLM_CACHE_DIR", cache_dir
+                )
+
                 revision = "2024-07-23"
                 vlm_model = AutoModelForCausalLM.from_pretrained(
                     vlm_model_id,
                     trust_remote_code=True,
                     revision=revision,
-                    cache_dir=cache_dir,
+                    cache_dir=dir,
                 ).to(device)
 
                 tokenizer = AutoTokenizer.from_pretrained(
-                    vlm_model_id, revision=revision, cache_dir=cache_dir
+                    vlm_model_id, revision=revision, cache_dir=dir
                 )
 
                 def answer(image, model, tokenizer, prompt):
@@ -236,7 +240,8 @@ def setup(kubin):
                 from models.mini_cpm import MiniCPMModel
 
                 vlm_model = MiniCPMModel()
-                vlm_model.load_model(cache_dir, device)
+                dir = kubin.env_utils.load_env_value("MINICPM_VLM_CACHE_DIR", cache_dir)
+                vlm_model.load_model(dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "cyan2k/molmo-7B-O-bnb-4bit":
@@ -250,7 +255,10 @@ def setup(kubin):
                 from models.paligemma2 import Paligemma2Model
 
                 vlm_model = Paligemma2Model()
-                vlm_model.load_model(cache_dir, device)
+                dir = kubin.env_utils.load_env_value(
+                    "PALIGEMMA2_VLM_CACHE_DIR", cache_dir
+                )
+                vlm_model.load_model(dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
         return vlm_model_fn
