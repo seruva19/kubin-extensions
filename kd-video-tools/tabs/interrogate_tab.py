@@ -22,7 +22,7 @@ def interrogator_block(kubin, title, input_video):
         clip_dir,
         clip_types,
         caption_extension,
-        skip_existing,
+        overwrite_existing,
         include_subdirectories,
         progress=gr.Progress(),
     ):
@@ -69,7 +69,7 @@ def interrogator_block(kubin, title, input_video):
                 caption_filename = base_name
                 caption_path = f"{caption_filename}{caption_extension}"
 
-                if os.path.exists(caption_path) and skip_existing:
+                if os.path.exists(caption_path) and not overwrite_existing:
                     pass
                 else:
                     output = interrogate_fn(filepath, prompt)
@@ -174,7 +174,7 @@ def interrogator_block(kubin, title, input_video):
                         label="Caption files",
                     )
                     with gr.Column():
-                        skip_existing = gr.Checkbox(
+                        overwrite_existing = gr.Checkbox(
                             False,
                             label="Overwrite existing",
                         )
@@ -201,7 +201,7 @@ def interrogator_block(kubin, title, input_video):
                         clip_dir,
                         clip_types,
                         caption_extension,
-                        skip_existing,
+                        overwrite_existing,
                         include_subdirectories,
                     ],
                     outputs=[fake_element, progress],
