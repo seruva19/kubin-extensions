@@ -193,12 +193,16 @@ def setup(kubin):
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "fancyfeast/joy-caption-alpha-two":
+                dir = kubin.env_utils.load_env_value(
+                    "JOYCAPTION_ALPHA2_VLM_CACHE_DIR", cache_dir
+                )
+
                 from models.joy_caption_alpha_two import (
                     JoyCaptionAlphaTwoInterrogatorModel,
                 )
 
                 vlm_model = JoyCaptionAlphaTwoInterrogatorModel()
-                vlm_model.load_components(cache_dir, device)
+                vlm_model.load_components(dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
             elif vlm_model_id == "THUDM/cogvlm2-llama3-chat-19B":

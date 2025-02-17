@@ -21,9 +21,7 @@ import json
 CHECKPOINT_PATH = "joy-caption-alpha-two"
 
 CLIP_PATH = "google/siglip-so400m-patch14-384"
-
-FORMER_LLM_MODEL_PATH = "meta-llama/Meta-Llama-3.1-8B"
-LLM_MODEL_PATH = "unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit"
+LLM_MODEL_PATH = "unsloth/Meta-Llama-3.1-8B-Instruct"
 
 CHECKPOINT_IMAGE_ADAPTER_URL = "https://huggingface.co/spaces/fancyfeast/joy-caption-alpha-two/resolve/main/cgrkzexw-599808/image_adapter.pt"
 CHECKPOINT_CLIP_MODEL_PATH = "https://huggingface.co/spaces/fancyfeast/joy-caption-alpha-two/resolve/main/cgrkzexw-599808/clip_model.pt"
@@ -259,7 +257,7 @@ class JoyCaptionAlphaTwoInterrogatorModel:
 
             print("loading tokenizer")
             self.tokenizer = AutoTokenizer.from_pretrained(
-                LLM_MODEL_PATH, use_fast=False, cache_dir=cache_dir
+                LLM_MODEL_PATH, cache_dir=cache_dir
             )
 
             print("loading LLM")
@@ -290,14 +288,6 @@ class JoyCaptionAlphaTwoInterrogatorModel:
                         )
                         urllib.request.urlretrieve(vlm_file_url, vlm_file_path)
                         print("VLM custom text models downloaded")
-
-                    config_path = custom_text_model_download_paths[0]
-                    with open(config_path, "r") as file:
-                        data = json.load(file)
-                    data["base_model_name_or_path"] = LLM_MODEL_PATH
-                    with open(config_path, "w") as file:
-                        json.dump(data, file, indent=2)
-                    print("LLM JSON config was changed")
 
             self.text_model = AutoModelForCausalLM.from_pretrained(
                 vlm_folder,
