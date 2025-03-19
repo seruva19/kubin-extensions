@@ -265,6 +265,14 @@ def setup(kubin):
                 vlm_model.load_model(dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
+            elif vlm_model_id == "AIDC-AI/Ovis2-16B":
+                from models.ovis_16b import Ovis_2Model
+
+                vlm_model = Ovis_2Model()
+                dir = kubin.env_utils.load_env_value("OVIS_VLM_CACHE_DIR", cache_dir)
+                vlm_model.load_model(dir, device, quantization)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
         return vlm_model_fn
 
     def route_interrogate(
@@ -469,6 +477,7 @@ def setup(kubin):
                                             "fancyfeast/joy-caption-alpha-two",
                                             "cyan2k/molmo-7B-O-bnb-4bit",
                                             "google/paligemma2-3b-ft-docci-448",
+                                            "AIDC-AI/Ovis2-16B",
                                         ],
                                         value="vikhyatk/moondream2",
                                         label="VLM name",
