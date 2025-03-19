@@ -14,6 +14,7 @@ from llava_onevision import LLAVA_MODEL_ID, init_llava
 from videochat_flash import VIDEOCHAT_MODEL_ID, init_videochat
 from minicpm_v26 import MINICPM_MODEL_ID, init_minicpm
 from videollama3 import VIDEOLLAMA3_MODEL_ID, init_videollama3
+from ovis_16b import OVIS2_MODEL_ID, init_ovis2
 
 
 def init_interrogate_fn(
@@ -129,7 +130,9 @@ def init_interrogate_fn(
             init_videollama3(
                 state, device, cache_dir, quantization, use_flash_attention
             )
-
+        elif model_name == OVIS2_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("OVIS_VLM_CACHE_DIR", cache_dir)
+            init_ovis2(state, device, dir, quantization, use_flash_attention)
         else:
             raise ValueError(f"unknown model name: {model_name}")
 
