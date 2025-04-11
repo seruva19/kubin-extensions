@@ -15,6 +15,7 @@ from videochat_flash import VIDEOCHAT_MODEL_ID, init_videochat
 from minicpm_v26 import MINICPM_MODEL_ID, init_minicpm
 from videollama3 import VIDEOLLAMA3_MODEL_ID, init_videollama3
 from ovis_16b import OVIS2_MODEL_ID, init_ovis2
+from gemini_api import GEMINI_MODEL_ID, init_gemini
 
 
 def init_interrogate_fn(
@@ -119,7 +120,8 @@ def init_interrogate_fn(
             state["fn"] = interrogate
 
         elif model_name == MINICPM_MODEL_ID:
-            init_minicpm(state, device, cache_dir, quantization, use_flash_attention)
+            dir = kubin.env_utils.load_env_value("MINICPM_VLM_CACHE_DIR", cache_dir)
+            init_minicpm(state, device, dir, quantization, use_flash_attention)
         elif model_name == APOLLO_MODEL_ID:
             init_apollo(state, device, cache_dir, quantization)
         elif model_name == LLAVA_MODEL_ID:
@@ -133,6 +135,8 @@ def init_interrogate_fn(
         elif model_name == OVIS2_MODEL_ID:
             dir = kubin.env_utils.load_env_value("OVIS_VLM_CACHE_DIR", cache_dir)
             init_ovis2(state, device, dir, quantization, use_flash_attention)
+        elif model_name == GEMINI_MODEL_ID:
+            init_gemini(state)
         else:
             raise ValueError(f"unknown model name: {model_name}")
 

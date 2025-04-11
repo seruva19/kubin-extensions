@@ -7,6 +7,7 @@ from videochat_flash import VIDEOCHAT_MODEL_ID
 from minicpm_v26 import MINICPM_MODEL_ID
 from videollama3 import VIDEOLLAMA3_MODEL_ID
 from ovis_16b import OVIS2_MODEL_ID
+from gemini_api import init_gemini, GEMINI_MODEL_ID
 
 
 def interrogator_block(kubin, title, input_video):
@@ -92,6 +93,7 @@ def interrogator_block(kubin, title, input_video):
                     VIDEOCHAT_MODEL_ID,
                     VIDEOLLAMA3_MODEL_ID,
                     OVIS2_MODEL_ID,
+                    GEMINI_MODEL_ID,
                 ],
                 value="THUDM/cogvlm2-video-llama3-chat",
                 label="Model",
