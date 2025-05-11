@@ -102,7 +102,7 @@ def setup(kubin):
 
         def on_image_select(image_name, results_df):
             if results_df is None or results_df.empty or not image_name:
-                return None, None, None
+                return None, None, None, None
 
             try:
                 if not isinstance(results_df, pd.DataFrame):
@@ -121,14 +121,16 @@ def setup(kubin):
 
                 if not os.path.exists(query_path):
                     k_log(f"query image not found: {query_path}")
-                    return None, None, None
+                    return None, None, None, None
 
                 query_image = Image.open(query_path)
+                width, height = query_image.size
+                source_image_info = f"Resolution: {width}x{height}, Path: {image_name}"
 
-                return (query_image, query_path, similar_images)
+                return (query_image, query_path, similar_images, source_image_info)
             except Exception as e:
                 k_log(f"error in on_image_select: {str(e)}")
-                return None, None, None
+                return None, None, None, None
 
         def process_folder(folder_path: str, top_results: int, score_threshold: float):
             try:
@@ -181,48 +183,115 @@ def setup(kubin):
             image_choices = [(img, img) for img in unique_images]
             return new_df, gr.update(choices=image_choices, value=None), []
 
+        def remove_source_image(image_name, results_df, remove_permanently):
+            if not image_name or results_df is None or results_df.empty:
+                return results_df, None, []
+
+            try:
+                full_path = os.path.join(current_folder["path"], image_name)
+
+                if not remove_permanently:
+                    duplicates_folder = os.path.join(
+                        current_folder["path"], "duplicates"
+                    )
+                    os.makedirs(duplicates_folder, exist_ok=True)
+                    try:
+                        new_duplicate_path = os.path.join(duplicates_folder, image_name)
+                        shutil.move(full_path, new_duplicate_path)
+                        k_log(f"moved source image to: {new_duplicate_path}")
+                    except Exception as e:
+                        k_log(f"error moving source image {full_path}: {str(e)}")
+                else:
+                    try:
+                        if os.path.exists(full_path):
+                            os.remove(full_path)
+                            k_log(f"deleted source image: {full_path}")
+                    except Exception as e:
+                        k_log(f"error deleting source image {full_path}: {str(e)}")
+
+                # Remove this image from results DataFrame
+                new_df = results_df[
+                    (results_df["Query Image"] != image_name)
+                    & (results_df["Similar Image"] != image_name)
+                ]
+
+                unique_images = sorted(new_df["Query Image"].unique().tolist())
+                image_choices = [(img, img) for img in unique_images]
+                return new_df, gr.update(choices=image_choices, value=None), []
+
+            except Exception as e:
+                k_log(f"Error removing source image: {str(e)}")
+                return results_df, None, []
+
         def remove_similar_image(
-            selected_gallery_item, image_name, results_df, remove_permanently
+            selected_gallery_item,
+            image_name,
+            results_df,
+            remove_permanently,
+            current_gallery,
         ):
-            if not selected_gallery_item or results_df is None or results_df.empty:
-                return results_df, []
+            if (
+                not selected_gallery_item
+                or results_df is None
+                or results_df.empty
+                or not image_name
+            ):
+                return results_df, current_gallery
 
-            selected_item = selected_gallery_item[0][1]
-            image_filename = selected_item.split("Path: ")[-1]
+            try:
+                selected_item = selected_gallery_item[0][1]
+                image_filename = selected_item.split("Path: ")[-1].strip()
 
-            if not image_filename:
-                return results_df, []
+                if not image_filename:
+                    return results_df, current_gallery
 
-            full_path = os.path.join(current_folder["path"], image_filename)
+                full_path = os.path.join(current_folder["path"], image_filename)
 
-            if not remove_permanently:
-                duplicates_folder = os.path.join(current_folder["path"], "duplicates")
-                os.makedirs(duplicates_folder, exist_ok=True)
-                try:
-                    new_duplicate_path = os.path.join(duplicates_folder, image_filename)
-                    shutil.move(full_path, new_duplicate_path)
-                    k_log(f"moved duplicate image to: {new_duplicate_path}")
-                except Exception as e:
-                    k_log(f"error moving image {full_path}: {str(e)}")
-            else:
-                try:
-                    if os.path.exists(full_path):
-                        os.remove(full_path)
-                        k_log(f"deleted image: {full_path}")
-                except Exception as e:
-                    k_log(f"error deleting image {full_path}: {str(e)}")
+                if not remove_permanently:
+                    duplicates_folder = os.path.join(
+                        current_folder["path"], "duplicates"
+                    )
+                    os.makedirs(duplicates_folder, exist_ok=True)
+                    try:
+                        new_duplicate_path = os.path.join(
+                            duplicates_folder, image_filename
+                        )
+                        shutil.move(full_path, new_duplicate_path)
+                        k_log(f"moved duplicate image to: {new_duplicate_path}")
+                    except Exception as e:
+                        k_log(f"error moving image {full_path}: {str(e)}")
+                else:
+                    try:
+                        if os.path.exists(full_path):
+                            os.remove(full_path)
+                            k_log(f"deleted image: {full_path}")
+                    except Exception as e:
+                        k_log(f"error deleting image {full_path}: {str(e)}")
 
-            new_df = results_df[
-                (results_df["Query Image"] != image_name)
-                & (results_df["Similar Image"] != image_name)
-            ]
+                # Remove the image from results DataFrame
+                results_df = results_df[
+                    (results_df["Similar Image"] != image_filename)
+                    | (results_df["Query Image"] != image_name)
+                ]
 
-            unique_images = sorted(new_df["Query Image"].unique().tolist())
-            image_choices = [(img, img) for img in unique_images]
-            return new_df, gr.update(choices=image_choices, value=None), []
+                # Update gallery by removing the selected image
+                updated_gallery = []
+                for img, caption in current_gallery:
+                    if image_filename not in caption:
+                        updated_gallery.append((img, caption))
+
+                return results_df, updated_gallery
+            except Exception as e:
+                k_log(f"Error in remove_similar_image: {str(e)}")
+                return results_df, current_gallery
 
         def update_display(image_name, results_df):
-            selected_img, path, similar_df = on_image_select(image_name, results_df)
+            selected_img, path, similar_df, source_image_info = on_image_select(
+                image_name, results_df
+            )
+
+            if selected_img is None:
+                return [None, "", [], None]
 
             gallery_images = []
             if similar_df is not None and not similar_df.empty:
@@ -243,9 +312,7 @@ def setup(kubin):
                     except Exception as e:
                         k_log(f"Error loading image {full_path}: {str(e)}")
 
-            width, height = selected_img.size
-            selected_image_info = f"Resolution: {width}x{height}"
-            return [selected_img, selected_image_info, gallery_images, path]
+            return [selected_img, source_image_info, gallery_images, path]
 
         with gr.Tabs() as image_tools_block:
             with gr.Tab("Similarity search"):
@@ -301,6 +368,7 @@ def setup(kubin):
 
                     results_store = gr.State()
                     selected_image_path = gr.State()
+                    gallery_state = gr.State([])
 
                     with gr.Row(visible=False) as similar_images:
                         with gr.Column(scale=1) as available_images:
@@ -325,9 +393,13 @@ def setup(kubin):
                                     selected_image_info = gr.Label(
                                         "", label="Image info"
                                     )
-                                    resolve_btn = gr.Button(
-                                        "Mark as Resolved", variant="primary"
-                                    )
+                                    with gr.Row():
+                                        resolve_btn = gr.Button(
+                                            "Mark as Resolved", variant="primary"
+                                        )
+                                        remove_source_btn = gr.Button(
+                                            "Remove Source Image", variant="stop"
+                                        )
 
                                 with gr.Column():
                                     similar_images_gallery = gr.Gallery(
@@ -376,11 +448,21 @@ def setup(kubin):
                             similar_images_gallery,
                             selected_image_path,
                         ],
+                    ).then(
+                        fn=lambda x: x,
+                        inputs=[similar_images_gallery],
+                        outputs=[gallery_state],
                     )
 
                     resolve_btn.click(
                         fn=mark_as_resolved,
                         inputs=[image_selector, results_store],
+                        outputs=[results_store, image_selector, similar_images_gallery],
+                    )
+
+                    remove_source_btn.click(
+                        fn=remove_source_image,
+                        inputs=[image_selector, results_store, remove_duplicates],
                         outputs=[results_store, image_selector, similar_images_gallery],
                     )
 
@@ -391,8 +473,9 @@ def setup(kubin):
                             image_selector,
                             results_store,
                             remove_duplicates,
+                            gallery_state,
                         ],
-                        outputs=[results_store, image_selector, similar_images_gallery],
+                        outputs=[results_store, similar_images_gallery],
                     )
 
             crop_model = None
@@ -407,53 +490,62 @@ def setup(kubin):
                 return crop_model
 
             def crop_resize_with_scene(image, target_width, target_height):
-                model = load_model()
-                transform = transforms.Compose([transforms.ToTensor()])
+                if image is None:
+                    return None
 
-                with torch.no_grad():
-                    detections = model(transform(image).unsqueeze(0))[0]
+                try:
+                    model = load_model()
+                    transform = transforms.Compose([transforms.ToTensor()])
 
-                boxes = detections["boxes"]
-                scores = detections["scores"]
-                valid_boxes = boxes[scores > 0.5]
+                    with torch.no_grad():
+                        detections = model(transform(image).unsqueeze(0))[0]
 
-                orig_width, orig_height = image.size
+                    boxes = detections["boxes"]
+                    scores = detections["scores"]
+                    valid_boxes = boxes[scores > 0.5]
 
-                if len(valid_boxes) > 0:
-                    x_min = int(torch.min(valid_boxes[:, 0]).item())
-                    y_min = int(torch.min(valid_boxes[:, 1]).item())
-                    x_max = int(torch.max(valid_boxes[:, 2]).item())
-                    y_max = int(torch.max(valid_boxes[:, 3]).item())
-                    center_x = (x_min + x_max) // 2
-                    center_y = (y_min + y_max) // 2
-                else:
-                    center_x = orig_width // 2
-                    center_y = orig_height // 2
+                    orig_width, orig_height = image.size
 
-                half_width = target_width // 2
-                half_height = target_height // 2
+                    if len(valid_boxes) > 0:
+                        x_min = int(torch.min(valid_boxes[:, 0]).item())
+                        y_min = int(torch.min(valid_boxes[:, 1]).item())
+                        x_max = int(torch.max(valid_boxes[:, 2]).item())
+                        y_max = int(torch.max(valid_boxes[:, 3]).item())
+                        center_x = (x_min + x_max) // 2
+                        center_y = (y_min + y_max) // 2
+                    else:
+                        center_x = orig_width // 2
+                        center_y = orig_height // 2
 
-                left = center_x - half_width
-                top = center_y - half_height
-                right = center_x + half_width
-                bottom = center_y + half_height
+                    half_width = target_width // 2
+                    half_height = target_height // 2
 
-                if left < 0:
-                    center_x += abs(left)
-                elif right > orig_width:
-                    center_x -= right - orig_width
+                    left = center_x - half_width
+                    top = center_y - half_height
+                    right = center_x + half_width
+                    bottom = center_y + half_height
 
-                if top < 0:
-                    center_y += abs(top)
-                elif bottom > orig_height:
-                    center_y -= bottom - orig_height
+                    if left < 0:
+                        center_x += abs(left)
+                    elif right > orig_width:
+                        center_x -= right - orig_width
 
-                left = max(0, min(orig_width - target_width, center_x - half_width))
-                top = max(0, min(orig_height - target_height, center_y - half_height))
-                right = left + target_width
-                bottom = top + target_height
+                    if top < 0:
+                        center_y += abs(top)
+                    elif bottom > orig_height:
+                        center_y -= bottom - orig_height
 
-                return image.crop((left, top, right, bottom))
+                    left = max(0, min(orig_width - target_width, center_x - half_width))
+                    top = max(
+                        0, min(orig_height - target_height, center_y - half_height)
+                    )
+                    right = left + target_width
+                    bottom = top + target_height
+
+                    return image.crop((left, top, right, bottom))
+                except Exception as e:
+                    k_log(f"Error in crop_resize_with_scene: {str(e)}")
+                    return None
 
             def process_image_or_folder(image, folder_path, width, height):
                 processed_gallery = []
@@ -480,6 +572,9 @@ def setup(kubin):
                         try:
                             img = Image.open(full_path)
                             cropped = crop_resize_with_scene(img, width, height)
+                            if cropped is None:
+                                continue
+
                             cropped_filename = f"cropped_{filename}"
                             cropped_path = os.path.join(cropped_dir, cropped_filename)
                             cropped.save(cropped_path)
@@ -497,6 +592,10 @@ def setup(kubin):
                     return
 
                 cropped_img = crop_resize_with_scene(image, width, height)
+                if cropped_img is None:
+                    yield None, []
+                    return
+
                 processed_gallery = [(cropped_img, "Cropped single image")]
 
                 yield cropped_img, processed_gallery
