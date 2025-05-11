@@ -15,6 +15,7 @@ from videochat_flash import VIDEOCHAT_MODEL_ID, init_videochat
 from minicpm_v26 import MINICPM_MODEL_ID, init_minicpm
 from videollama3 import VIDEOLLAMA3_MODEL_ID, init_videollama3
 from ovis_16b import OVIS2_MODEL_ID, init_ovis2
+from qwen_25_vl import QWEN25_VL_MODEL_ID, SKY_CAPTIONER_MODEL_ID, init_qwen25vl
 from gemini_api import GEMINI_MODEL_ID, init_gemini
 
 
@@ -135,6 +136,26 @@ def init_interrogate_fn(
         elif model_name == OVIS2_MODEL_ID:
             dir = kubin.env_utils.load_env_value("OVIS_VLM_CACHE_DIR", cache_dir)
             init_ovis2(state, device, dir, quantization, use_flash_attention)
+        elif model_name == QWEN25_VL_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("QWEN_25VL_DIR", cache_dir)
+            init_qwen25vl(
+                state,
+                device,
+                dir,
+                quantization,
+                QWEN25_VL_MODEL_ID,
+                use_flash_attention,
+            )
+        elif model_name == SKY_CAPTIONER_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("SKY_CAPTIONER_DIR", cache_dir)
+            init_qwen25vl(
+                state,
+                device,
+                dir,
+                quantization,
+                SKY_CAPTIONER_MODEL_ID,
+                use_flash_attention,
+            )
         elif model_name == GEMINI_MODEL_ID:
             init_gemini(state)
         else:

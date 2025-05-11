@@ -4,3 +4,4 @@ num2words==0.5.14
 timm==1.0.14
 ffmpeg-python==0.2.0
 google-genai==1.10.0
+qwen-vl-utils[decord]==0.0.8

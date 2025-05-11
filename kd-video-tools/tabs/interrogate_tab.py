@@ -7,6 +7,7 @@ from videochat_flash import VIDEOCHAT_MODEL_ID
 from minicpm_v26 import MINICPM_MODEL_ID
 from videollama3 import VIDEOLLAMA3_MODEL_ID
 from ovis_16b import OVIS2_MODEL_ID
+from qwen_25_vl import QWEN25_VL_MODEL_ID, SKY_CAPTIONER_MODEL_ID
 from gemini_api import init_gemini, GEMINI_MODEL_ID
 
 
@@ -93,6 +94,8 @@ def interrogator_block(kubin, title, input_video):
                     VIDEOCHAT_MODEL_ID,
                     VIDEOLLAMA3_MODEL_ID,
                     OVIS2_MODEL_ID,
+                    QWEN25_VL_MODEL_ID,
+                    SKY_CAPTIONER_MODEL_ID,
                     GEMINI_MODEL_ID,
                 ],
                 value="THUDM/cogvlm2-video-llama3-chat",
@@ -171,10 +174,9 @@ def interrogator_block(kubin, title, input_video):
                     )
 
                 with gr.Row():
-                    caption_extension = gr.Radio(
-                        choices=[".txt"],
-                        info="Target captions",
+                    caption_extension = gr.Textbox(
                         value=".txt",
+                        info="Caption files extension",
                         label="Caption files",
                     )
                     with gr.Column():
