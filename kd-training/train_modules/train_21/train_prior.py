@@ -1,6 +1,6 @@
 import os
 import torch
-from huggingface_hub import hf_hub_url, cached_download
+from huggingface_hub import hf_hub_url, hf_hub_download
 import pytorch_lightning as pl
 import clip
 
@@ -35,12 +35,12 @@ def get_prior_model(kubin):
     config_file_url = hf_hub_url(
         repo_id="sberbank-ai/Kandinsky_2.1", filename=prior_name
     )
-    cached_download(config_file_url, cache_dir=cache_dir, force_filename=prior_name)
+    hf_hub_download(config_file_url, cache_dir=cache_dir, force_filename=prior_name)
 
     config_file_url = hf_hub_url(
         repo_id="sberbank-ai/Kandinsky_2.1", filename="ViT-L-14_stats.th"
     )
-    cached_download(
+    hf_hub_download(
         config_file_url, cache_dir=cache_dir, force_filename="ViT-L-14_stats.th"
     )
 

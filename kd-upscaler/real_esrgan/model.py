@@ -14,7 +14,7 @@ from torch.nn import functional as F
 from PIL import Image
 import numpy as np
 import cv2
-from huggingface_hub import hf_hub_url, cached_download
+from huggingface_hub import hf_hub_url, hf_hub_download
 
 from .rrdbnet_arch import RRDBNet
 from .utils import (
@@ -67,7 +67,7 @@ class RealESRGAN:
             config_file_url = hf_hub_url(
                 repo_id=config["repo_id"], filename=config["filename"]
             )
-            cached_download(
+            hf_hub_download(
                 config_file_url, cache_dir=cache_dir, force_filename=local_filename
             )
             print("Weights downloaded to:", os.path.join(cache_dir, local_filename))

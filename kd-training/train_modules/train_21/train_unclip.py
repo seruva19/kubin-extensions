@@ -1,5 +1,5 @@
 import os
-from huggingface_hub import hf_hub_url, cached_download
+from huggingface_hub import hf_hub_url, hf_hub_download
 import torch
 import pytorch_lightning as pl
 from omegaconf import OmegaConf
@@ -57,7 +57,7 @@ def get_unclip_model(kubin, inpainting):
             repo_id="sberbank-ai/Kandinsky_2.1", filename=model_name
         )
 
-    cached_download(
+    hf_hub_download(
         config_file_url,
         cache_dir=cache_dir,
         force_filename=model_name,
@@ -76,7 +76,7 @@ def get_unclip_model(kubin, inpainting):
         config_file_url = hf_hub_url(
             repo_id="sberbank-ai/Kandinsky_2.1", filename=f"text_encoder/{name}"
         )
-        cached_download(
+        hf_hub_download(
             config_file_url,
             cache_dir=cache_dir_text_en,
             force_filename=name,
@@ -86,7 +86,7 @@ def get_unclip_model(kubin, inpainting):
     config_file_url = hf_hub_url(
         repo_id="sberbank-ai/Kandinsky_2.1", filename="movq_final.ckpt"
     )
-    cached_download(
+    hf_hub_download(
         config_file_url,
         cache_dir=cache_dir,
         force_filename="movq_final.ckpt",
