@@ -1,6 +1,5 @@
 import gradio as gr
 from tabs.interrogate_tab import interrogator_block
-from tabs.classification_tab import classification_block
 
 title = "Video Tools"
 
@@ -27,10 +26,6 @@ def setup(kubin):
                     "Video Interrogation", elem_id="video-interrogation-section"
                 ):
                     interrogator_block(kubin, title, input_interrogate_video)
-                with gr.Tab(
-                    "Video Classification", elem_id="video-classification-section"
-                ):
-                    classification_block(kubin, title, input_interrogate_video)
 
         return video_tools_block
 

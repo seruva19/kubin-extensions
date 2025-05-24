@@ -1,3 +1,4 @@
+import os
 import torch
 from transformers import (
     Qwen2_5_VLForConditionalGeneration,
@@ -58,30 +59,48 @@ def init_qwen25vl(
     else:
         state["q"] = q_conf
 
-    def interrogate(video_path, question):
+    def interrogate(file_path, question):
         model = state["model"]
         processor = state["processor"]
 
-        video_reader = decord.VideoReader(video_path)
-        fps = video_reader.get_avg_fps()
+        image_extensions = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"}
+        file_extension = os.path.splitext(file_path)[1].lower()
 
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "video",
-                        "video": video_path,
-                        "fps": 1,  # fps,
-                    },
-                    {"type": "text", "text": question},
-                ],
-            }
-        ]
+        if file_extension in image_extensions:
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "image": file_path,
+                        },
+                        {"type": "text", "text": question},
+                    ],
+                }
+            ]
+        else:
+            video_reader = decord.VideoReader(file_path)
+            fps = 5  # video_reader.get_avg_fps()
+
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "video",
+                            "video": file_path,
+                            "fps": fps,
+                        },
+                        {"type": "text", "text": question},
+                    ],
+                }
+            ]
 
         text = processor.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
         )
+
         image_inputs, video_inputs = process_vision_info(messages)
         inputs = processor(
             text=[text],

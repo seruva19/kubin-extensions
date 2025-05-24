@@ -8,7 +8,14 @@ from minicpm_v26 import MINICPM_MODEL_ID
 from videollama3 import VIDEOLLAMA3_MODEL_ID
 from ovis_16b import OVIS2_MODEL_ID
 from qwen_25_vl import QWEN25_VL_MODEL_ID, SKY_CAPTIONER_MODEL_ID
+from video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from gemini_api import init_gemini, GEMINI_MODEL_ID
+from functions.classify_video import (
+    DEFAULT_CLASSIFIER_TEMPLATE,
+    classify,
+)
+
+DEFAULT_INTERROGATE_PROMPT = "Create a detailed (short) description of the video"
 
 
 def interrogator_block(kubin, title, input_video):
@@ -22,6 +29,7 @@ def interrogator_block(kubin, title, input_video):
         use_flash_attention,
         video,
         prompt,
+        use_classifier,
         clip_dir,
         clip_types,
         caption_extension,
@@ -72,16 +80,27 @@ def interrogator_block(kubin, title, input_video):
                 caption_filename = base_name
                 caption_path = f"{caption_filename}{caption_extension}"
 
-                if os.path.exists(caption_path) and not overwrite_existing:
+                if (
+                    not use_classifier
+                    and os.path.exists(caption_path)
+                    and not overwrite_existing
+                ):
                     pass
                 else:
                     output = interrogate_fn(filepath, prompt)
-                    output = prepended + output + appended
+                    if use_classifier:
+                        classify(filepath, output, clip_dir)
+                    else:
+                        output = prepended + output + appended
 
-                    with open(caption_path, "w", encoding="utf-8") as file:
-                        file.write(output)
+                        with open(caption_path, "w", encoding="utf-8") as file:
+                            file.write(output)
 
-            return None, f"Captions for {len(relevant_clips)} videos created"
+            return None, (
+                f"{len(relevant_clips)} videos classified"
+                if use_classifier
+                else f"Captions for {len(relevant_clips)} videos created"
+            )
 
     with gr.Column() as video_interrogator_block:
         with gr.Row():
@@ -96,6 +115,7 @@ def interrogator_block(kubin, title, input_video):
                     OVIS2_MODEL_ID,
                     QWEN25_VL_MODEL_ID,
                     SKY_CAPTIONER_MODEL_ID,
+                    VIDEOR1_MODEL_ID,
                     GEMINI_MODEL_ID,
                 ],
                 value="THUDM/cogvlm2-video-llama3-chat",
@@ -107,19 +127,33 @@ def interrogator_block(kubin, title, input_video):
                 label="Quantization",
             )
 
-            use_flash_attention = gr.Checkbox(
-                False,
-                label="Use FlashAttention",
-            )
+            with gr.Column():
+                use_flash_attention = gr.Checkbox(
+                    False,
+                    label="Use FlashAttention",
+                )
+                activate_classifier = gr.Checkbox(
+                    False,
+                    label="Activate classifier",
+                    info="Only for folder processing",
+                )
+
         with gr.Row():
-            model_prompt = gr.Dropdown(
-                allow_custom_value=True,
-                choices=[
-                    "Create a short description of the video",
-                    "Describe this video in detail",
-                ],
-                value="Describe this video in detail",
+            model_prompt = gr.TextArea(
+                lines=5,
+                max_lines=5,
+                value=DEFAULT_INTERROGATE_PROMPT,
                 label="Prompt",
+            )
+
+            activate_classifier.change(
+                fn=lambda activate: (
+                    DEFAULT_CLASSIFIER_TEMPLATE
+                    if activate
+                    else DEFAULT_INTERROGATE_PROMPT
+                ),
+                inputs=[activate_classifier],
+                outputs=[model_prompt],
             )
 
         with gr.Row():
@@ -149,6 +183,7 @@ def interrogator_block(kubin, title, input_video):
                             use_flash_attention,
                             input_video,
                             model_prompt,
+                            activate_classifier,
                             gr.State(None),
                             gr.State(None),
                             gr.State(None),
@@ -163,14 +198,14 @@ def interrogator_block(kubin, title, input_video):
                     )
 
             with gr.TabItem("Folder"):
-                clip_dir = gr.Textbox(label="Directory with videos")
+                clip_dir = gr.Textbox(label="Directory with source files")
 
                 with gr.Row():
                     clip_types = gr.CheckboxGroup(
                         [".mp4", ".jpg", ".png"],
                         value=[".mp4"],
                         label="Files to interrogate",
-                        info="Images will be treated as single-frame videos",
+                        info="If specific VLM does not have native image interrogation capability, then images will be treated as single-frame videos",
                     )
 
                 with gr.Row():
@@ -204,6 +239,7 @@ def interrogator_block(kubin, title, input_video):
                         use_flash_attention,
                         input_video,
                         model_prompt,
+                        activate_classifier,
                         clip_dir,
                         clip_types,
                         caption_extension,
