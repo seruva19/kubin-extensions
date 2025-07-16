@@ -4,11 +4,11 @@ from transformers import BitsAndBytesConfig
 from decord import VideoReader, cpu
 from PIL import Image
 
-MINICPM_V_MODEL_ID = "openbmb/MiniCPM-V-2_6"
+MINICPM_OMNI_MODEL_ID = "openbmb/MiniCPM-o-2_6"
 
 
-def init_minicpm(state, device, cache_dir, quantization, use_flash_attention):
-    state["name"] = MINICPM_V_MODEL_ID
+def init_minicpm_omni(state, device, cache_dir, quantization, use_flash_attention):
+    state["name"] = MINICPM_OMNI_MODEL_ID
 
     q_conf = None
     if quantization == "none":
@@ -25,7 +25,7 @@ def init_minicpm(state, device, cache_dir, quantization, use_flash_attention):
         q_conf = BitsAndBytesConfig(load_in_8bit=True)
 
     state["model"] = AutoModel.from_pretrained(
-        MINICPM_V_MODEL_ID,
+        MINICPM_OMNI_MODEL_ID,
         trust_remote_code=True,
         attn_implementation="flash_attention_2" if use_flash_attention else "sdpa",
         torch_dtype=torch.bfloat16,
@@ -41,7 +41,7 @@ def init_minicpm(state, device, cache_dir, quantization, use_flash_attention):
     state["model"].eval()
 
     state["tokenizer"] = AutoTokenizer.from_pretrained(
-        MINICPM_V_MODEL_ID, trust_remote_code=True, cache_dir=cache_dir
+        MINICPM_OMNI_MODEL_ID, trust_remote_code=True, cache_dir=cache_dir
     )
 
     MAX_NUM_FRAMES = 512

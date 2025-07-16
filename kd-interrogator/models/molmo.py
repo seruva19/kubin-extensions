@@ -20,6 +20,7 @@ class Molmo7BModel:
                 "device_map": "auto",
                 "torch_dtype": "auto",
                 "trust_remote_code": True,
+                # "force_download": True,
                 "cache_dir": cache_dir,
             }
 

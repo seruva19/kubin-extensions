@@ -1,15 +1,19 @@
 import gradio as gr
 import os
-from video_interrogate import init_interrogate_fn
+
 from apollo_inference import APOLLO_MODEL_ID
 from llava_onevision import LLAVA_MODEL_ID
 from videochat_flash import VIDEOCHAT_MODEL_ID
-from minicpm_v26 import MINICPM_MODEL_ID
+from minicpm_v26 import MINICPM_V_MODEL_ID
+from minicpm_o26 import MINICPM_OMNI_MODEL_ID
 from videollama3 import VIDEOLLAMA3_MODEL_ID
 from ovis_16b import OVIS2_MODEL_ID
-from qwen_25_vl import QWEN25_VL_MODEL_ID, SKY_CAPTIONER_MODEL_ID
+from qwen_25_vl import QWEN25_VL_MODEL_ID, SHOTVL_MODEL_ID, SKY_CAPTIONER_MODEL_ID
 from video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from gemini_api import init_gemini, GEMINI_MODEL_ID
+from keye_vl_8b import KEYE_VL_MODEL_ID
+
+from functions.video_interrogate import init_interrogate_fn
 from functions.classify_video import (
     DEFAULT_CLASSIFIER_TEMPLATE,
     classify,
@@ -18,10 +22,8 @@ from functions.classify_video import (
 DEFAULT_INTERROGATE_PROMPT = "Create a detailed (short) description of the video"
 
 
-def interrogator_block(kubin, title, input_video):
+def interrogator_block(kubin, state, title, input_video):
     cache_dir = kubin.params("general", "cache_dir")
-
-    now = {"model": None, "tokenizer": None, "name": None, "fn": None, "q": None}
 
     def interrogate(
         model_name,
@@ -41,7 +43,7 @@ def interrogator_block(kubin, title, input_video):
 
         init_interrogate_fn(
             kubin=kubin,
-            state=now,
+            state=state,
             cache_dir=cache_dir,
             device=kubin.params("general", "device"),
             model_name=model_name,
@@ -49,7 +51,7 @@ def interrogator_block(kubin, title, input_video):
             use_flash_attention=use_flash_attention,
         )
 
-        interrogate_fn = now["fn"]
+        interrogate_fn = state["fn"]
 
         if clip_dir is None:
             output = interrogate_fn(video, prompt)
@@ -107,7 +109,8 @@ def interrogator_block(kubin, title, input_video):
             video_model = gr.Dropdown(
                 choices=[
                     "THUDM/cogvlm2-video-llama3-chat",
-                    MINICPM_MODEL_ID,
+                    MINICPM_V_MODEL_ID,
+                    MINICPM_OMNI_MODEL_ID,
                     APOLLO_MODEL_ID,
                     LLAVA_MODEL_ID,
                     VIDEOCHAT_MODEL_ID,
@@ -115,7 +118,9 @@ def interrogator_block(kubin, title, input_video):
                     OVIS2_MODEL_ID,
                     QWEN25_VL_MODEL_ID,
                     SKY_CAPTIONER_MODEL_ID,
+                    SHOTVL_MODEL_ID,
                     VIDEOR1_MODEL_ID,
+                    KEYE_VL_MODEL_ID,
                     GEMINI_MODEL_ID,
                 ],
                 value="THUDM/cogvlm2-video-llama3-chat",

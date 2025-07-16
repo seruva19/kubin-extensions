@@ -244,7 +244,9 @@ def setup(kubin):
                 from models.mini_cpm import MiniCPMModel
 
                 vlm_model = MiniCPMModel()
-                dir = kubin.env_utils.load_env_value("MINICPM_VLM_CACHE_DIR", cache_dir)
+                dir = kubin.env_utils.load_env_value(
+                    "MINICPM_V_VLM_CACHE_DIR", cache_dir
+                )
                 vlm_model.load_model(dir, device)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
@@ -431,8 +433,8 @@ def setup(kubin):
     def interrogator_ui(ui_shared, ui_tabs):
         with gr.Row() as interrogator_block:
             with gr.Column(scale=1) as interrogator_params_block:
-                with gr.Tabs() as interrogator_panels:
-                    with gr.Tab("CLIP"):
+                with gr.Tabs(selected=1) as interrogator_panels:
+                    with gr.Tab("CLIP", id=0):
                         with gr.Row():
                             clip_model = gr.Dropdown(
                                 choices=[
@@ -458,7 +460,7 @@ def setup(kubin):
                             chunk_size = gr.Slider(
                                 512, 2048, 2048, step=512, label="Chunk size"
                             )
-                    with gr.Tab("VLM"):
+                    with gr.Tab("VLM", id=1):
                         with gr.Row() as vlm_interrogator_block:
                             with gr.Column(scale=1) as vlm_interrogator_params_block:
                                 with gr.Row():

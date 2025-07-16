@@ -12,11 +12,18 @@ import types
 from apollo_inference import APOLLO_MODEL_ID, init_apollo
 from llava_onevision import LLAVA_MODEL_ID, init_llava
 from videochat_flash import VIDEOCHAT_MODEL_ID, init_videochat
-from minicpm_v26 import MINICPM_MODEL_ID, init_minicpm
+from minicpm_v26 import MINICPM_V_MODEL_ID, init_minicpm
+from minicpm_o26 import MINICPM_OMNI_MODEL_ID, init_minicpm_omni
 from videollama3 import VIDEOLLAMA3_MODEL_ID, init_videollama3
 from ovis_16b import OVIS2_MODEL_ID, init_ovis2
-from qwen_25_vl import QWEN25_VL_MODEL_ID, SKY_CAPTIONER_MODEL_ID, init_qwen25vl
+from qwen_25_vl import (
+    QWEN25_VL_MODEL_ID,
+    SHOTVL_MODEL_ID,
+    SKY_CAPTIONER_MODEL_ID,
+    init_qwen25vl,
+)
 from video_r1 import VIDEOR1_MODEL_ID, init_videor1
+from keye_vl_8b import KEYE_VL_MODEL_ID, init_keye_vl
 from gemini_api import GEMINI_MODEL_ID, init_gemini
 
 
@@ -121,9 +128,12 @@ def init_interrogate_fn(
 
             state["fn"] = interrogate
 
-        elif model_name == MINICPM_MODEL_ID:
-            dir = kubin.env_utils.load_env_value("MINICPM_VLM_CACHE_DIR", cache_dir)
+        elif model_name == MINICPM_V_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("MINICPM_V_VLM_CACHE_DIR", cache_dir)
             init_minicpm(state, device, dir, quantization, use_flash_attention)
+        elif model_name == MINICPM_OMNI_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("MINICPM_O_VLM_CACHE_DIR", cache_dir)
+            init_minicpm_omni(state, device, dir, quantization, use_flash_attention)
         elif model_name == APOLLO_MODEL_ID:
             init_apollo(state, device, cache_dir, quantization)
         elif model_name == LLAVA_MODEL_ID:
@@ -155,6 +165,25 @@ def init_interrogate_fn(
                 dir,
                 quantization,
                 SKY_CAPTIONER_MODEL_ID,
+                use_flash_attention,
+            )
+        elif model_name == KEYE_VL_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("KEYE_VL_CACHE_DIR", cache_dir)
+            init_keye_vl(
+                state,
+                device,
+                dir,
+                quantization,
+                use_flash_attention,
+            )
+        elif model_name == SHOTVL_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("SHOTVL_DIR", cache_dir)
+            init_qwen25vl(
+                state,
+                device,
+                dir,
+                quantization,
+                SHOTVL_MODEL_ID,
                 use_flash_attention,
             )
         elif model_name == VIDEOR1_MODEL_ID:

@@ -1,10 +1,20 @@
 import gradio as gr
 from tabs.interrogate_tab import interrogator_block
+from tabs.video_select_tab import selector_block
 
 title = "Video Tools"
 
 
 def setup(kubin):
+    state = {
+        "model": None,
+        "tokenizer": None,
+        "processor": None,
+        "name": None,
+        "fn": None,
+        "q": None,
+    }
+
     input_interrogate_video = gr.Video(
         value=None,
         autoplay=False,
@@ -12,7 +22,7 @@ def setup(kubin):
         label="Input video",
     )
 
-    input_scenedetect_video = gr.Video(
+    input_selector_video = gr.Video(
         value=None,
         autoplay=False,
         source="upload",
@@ -25,7 +35,9 @@ def setup(kubin):
                 with gr.Tab(
                     "Video Interrogation", elem_id="video-interrogation-section"
                 ):
-                    interrogator_block(kubin, title, input_interrogate_video)
+                    interrogator_block(kubin, state, title, input_interrogate_video)
+                with gr.Tab("Video Selection", elem_id="video-selection-section"):
+                    selector_block(kubin, state, title, input_selector_video)
 
         return video_tools_block
 

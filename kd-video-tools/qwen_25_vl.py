@@ -14,6 +14,7 @@ from moviepy.editor import VideoFileClip
 
 QWEN25_VL_MODEL_ID = "Qwen/Qwen2.5-VL-7B-Instruct"
 SKY_CAPTIONER_MODEL_ID = "Skywork/SkyCaptioner-V1"
+SHOTVL_MODEL_ID = "Vchitect/ShotVL-7B"
 
 
 def init_qwen25vl(
@@ -43,13 +44,18 @@ def init_qwen25vl(
         torch_dtype=torch.bfloat16,
         attn_implementation="flash_attention_2" if use_flash_attention else "sdpa",
         quantization_config=q_conf,
+        device_map="balanced",
         cache_dir=cache_dir,
     )
 
     state["processor"] = AutoProcessor.from_pretrained(
         state["name"],
-        min_pixels=min_pixels,
-        max_pixels=max_pixels,
+        # revision="refs/pr/24" if state["name"] == SHOTVL_MODEL_ID else None,
+        use_fast=True,
+        # min_pixels=min_pixels,
+        # max_pixels=max_pixels,
+        # max_pixels=360*640,
+        # fps=12.0,
         cache_dir=cache_dir,
     )
 
@@ -81,7 +87,7 @@ def init_qwen25vl(
             ]
         else:
             video_reader = decord.VideoReader(file_path)
-            fps = 5  # video_reader.get_avg_fps()
+            fps = 12 if model_id == SHOTVL_MODEL_ID else 5  # video_reader.get_avg_fps()
 
             messages = [
                 {
@@ -90,6 +96,7 @@ def init_qwen25vl(
                         {
                             "type": "video",
                             "video": file_path,
+                            "max_pixels": max_pixels,
                             "fps": fps,
                         },
                         {"type": "text", "text": question},
@@ -111,13 +118,11 @@ def init_qwen25vl(
         )
         inputs = inputs.to("cuda")
 
-        generated_ids = model.generate(**inputs, max_new_tokens=512)
-        generated_ids_trimmed = [
-            out_ids[len(in_ids) :]
-            for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-        ]
+        with torch.inference_mode():
+            out_ids = model.generate(**inputs, max_new_tokens=512)
+        out_ids_trimmed = [o[len(i) :] for i, o in zip(inputs.input_ids, out_ids)]
         output_text = processor.batch_decode(
-            generated_ids_trimmed,
+            out_ids_trimmed,
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False,
         )
