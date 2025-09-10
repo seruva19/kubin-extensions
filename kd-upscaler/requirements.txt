@@ -1,2 +1,5 @@
 git+https://github.com/xinntao/Real-ESRGAN@5ca1078
+basicsr==1.4.2
 aura-sr==0.0.4
+spandrel==0.4.1
+spandrel-extra-arches==0.2.0
