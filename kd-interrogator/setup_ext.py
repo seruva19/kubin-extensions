@@ -275,6 +275,29 @@ def setup(kubin):
                 vlm_model.load_model(dir, device, quantization)
                 vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
 
+            elif vlm_model_id == "fancyfeast/joy-caption-beta-one":
+                dir = kubin.env_utils.load_env_value(
+                    "JOYCAPTION_BETA1_VLM_CACHE_DIR", cache_dir
+                )
+
+                from models.joy_caption_beta_one import (
+                    JoyCaptionBetaOneInterrogatorModel,
+                )
+
+                vlm_model = JoyCaptionBetaOneInterrogatorModel()
+                vlm_model.load_components(cache_dir, device)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
+            elif vlm_model_id == "SicariusSicariiStuff/X-Ray_Alpha":
+                from models.xray_alpha import XRayAlphaModel
+
+                dir = kubin.env_utils.load_env_value(
+                    "XRAY_ALPHA_VLM_CACHE_DIR", cache_dir
+                )
+                vlm_model = XRayAlphaModel()
+                vlm_model.load_model(dir, device, quantization)
+                vlm_model_fn = lambda i, p: vlm_model.get_caption(i, p)
+
         return vlm_model_fn
 
     def route_interrogate(
@@ -433,7 +456,7 @@ def setup(kubin):
     def interrogator_ui(ui_shared, ui_tabs):
         with gr.Row() as interrogator_block:
             with gr.Column(scale=1) as interrogator_params_block:
-                with gr.Tabs(selected=1) as interrogator_panels:
+                with gr.Tabs(selected=0) as interrogator_panels:
                     with gr.Tab("CLIP", id=0):
                         with gr.Row():
                             clip_model = gr.Dropdown(
@@ -477,9 +500,11 @@ def setup(kubin):
                                             "fancyfeast/joy-caption-pre-alpha",
                                             "fancyfeast/joy-caption-alpha-one",
                                             "fancyfeast/joy-caption-alpha-two",
+                                            "fancyfeast/joy-caption-beta-one",
                                             "cyan2k/molmo-7B-O-bnb-4bit",
                                             "google/paligemma2-3b-ft-docci-448",
                                             "AIDC-AI/Ovis2-16B",
+                                            "SicariusSicariiStuff/X-Ray_Alpha",
                                         ],
                                         value="vikhyatk/moondream2",
                                         label="VLM name",
@@ -556,6 +581,9 @@ def setup(kubin):
                                     ):
                                         prompt = "Descriptive,very long"
 
+                                    elif vlm_model == "fancyfeast/joy-caption-beta-one":
+                                        prompt = "Write a detailed description for this image."
+
                                     elif vlm_model == "cyan2k/molmo-7B-O-bnb-4bit":
                                         prompt = "Describe this image."
 
@@ -563,6 +591,11 @@ def setup(kubin):
                                         vlm_model == "google/paligemma2-3b-ft-docci-448"
                                     ):
                                         prompt = "caption in detail"
+
+                                    elif (
+                                        vlm_model == "SicariusSicariiStuff/X-Ray_Alpha"
+                                    ):
+                                        prompt = "Describe this image in detail, including all visible elements and their characteristics."
 
                                     return prompt
 
@@ -735,8 +768,8 @@ def setup(kubin):
         "tab_ui": lambda ui_s, ts: interrogator_ui(ui_s, ts),
         "send_target": source_image,
         "api": {
-            interrogate: lambda image, mode="fast", clip_model="ViT-L-14/openai", blip_type="large", chunks=2048: interrogate(
-                image, mode, clip_model, blip_type, chunks
+            interrogate: lambda image, mode="fast", clip_model="ViT-L-14/openai", blip_type="large", chunks=2048, prepended_txt="", appended_txt="": interrogate(
+                image, mode, clip_model, blip_type, chunks, prepended_txt, appended_txt
             )
         },
     }
