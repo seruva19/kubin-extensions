@@ -24,6 +24,7 @@ from qwen_25_vl import (
 )
 from video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from keye_vl_8b import KEYE_VL_MODEL_ID, init_keye_vl
+from keye_vl_15 import KEYE_VL_15_MODEL_ID, init_keye_vl_15
 from gemini_api import GEMINI_MODEL_ID, init_gemini
 
 
@@ -170,6 +171,15 @@ def init_interrogate_fn(
         elif model_name == KEYE_VL_MODEL_ID:
             dir = kubin.env_utils.load_env_value("KEYE_VL_CACHE_DIR", cache_dir)
             init_keye_vl(
+                state,
+                device,
+                dir,
+                quantization,
+                use_flash_attention,
+            )
+        elif model_name == KEYE_VL_15_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("KEYE_VL15_CACHE_DIR", cache_dir)
+            init_keye_vl_15(
                 state,
                 device,
                 dir,

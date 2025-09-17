@@ -12,6 +12,7 @@ from qwen_25_vl import QWEN25_VL_MODEL_ID, SHOTVL_MODEL_ID, SKY_CAPTIONER_MODEL_
 from video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from gemini_api import init_gemini, GEMINI_MODEL_ID
 from keye_vl_8b import KEYE_VL_MODEL_ID
+from keye_vl_15 import KEYE_VL_15_MODEL_ID
 
 from functions.video_interrogate import init_interrogate_fn
 from functions.classify_video import (
@@ -121,6 +122,7 @@ def interrogator_block(kubin, state, title, input_video):
                     SHOTVL_MODEL_ID,
                     VIDEOR1_MODEL_ID,
                     KEYE_VL_MODEL_ID,
+                    KEYE_VL_15_MODEL_ID,
                     GEMINI_MODEL_ID,
                 ],
                 value="THUDM/cogvlm2-video-llama3-chat",
