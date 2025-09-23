@@ -22,6 +22,7 @@ from qwen_25_vl import (
     SKY_CAPTIONER_MODEL_ID,
     init_qwen25vl,
 )
+from qwen3_omni import QWEN3_OMNI_MODEL_ID, init_qwen3omni
 from video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from keye_vl_8b import KEYE_VL_MODEL_ID, init_keye_vl
 from keye_vl_15 import KEYE_VL_15_MODEL_ID, init_keye_vl_15
@@ -199,6 +200,16 @@ def init_interrogate_fn(
         elif model_name == VIDEOR1_MODEL_ID:
             dir = kubin.env_utils.load_env_value("VIDEOR1_VLM_CACHE_DIR", cache_dir)
             init_videor1(state, device, dir, quantization, use_flash_attention)
+        elif model_name == QWEN3_OMNI_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("QWEN3_OMNI_DIR", cache_dir)
+            init_qwen3omni(
+                state,
+                device,
+                dir,
+                quantization,
+                QWEN3_OMNI_MODEL_ID,
+                use_flash_attention,
+            )
         elif model_name == GEMINI_MODEL_ID:
             init_gemini(state)
         else:
