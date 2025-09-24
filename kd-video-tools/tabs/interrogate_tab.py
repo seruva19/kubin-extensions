@@ -10,6 +10,7 @@ from videollama3 import VIDEOLLAMA3_MODEL_ID
 from ovis_16b import OVIS2_MODEL_ID
 from qwen_25_vl import QWEN25_VL_MODEL_ID, SHOTVL_MODEL_ID, SKY_CAPTIONER_MODEL_ID
 from qwen3_omni import QWEN3_OMNI_MODEL_ID
+from qwen25_omni_awq import QWEN25_OMNI_AWQ_MODEL_ID
 from video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from gemini_api import init_gemini, GEMINI_MODEL_ID
 from keye_vl_8b import KEYE_VL_MODEL_ID
@@ -31,6 +32,7 @@ def interrogator_block(kubin, state, title, input_video):
         model_name,
         quantization,
         use_flash_attention,
+        use_audio_in_video,
         video,
         prompt,
         use_classifier,
@@ -51,12 +53,21 @@ def interrogator_block(kubin, state, title, input_video):
             model_name=model_name,
             quantization=quantization,
             use_flash_attention=use_flash_attention,
+            use_audio_in_video=use_audio_in_video,
         )
 
         interrogate_fn = state["fn"]
 
+        import inspect
+
+        sig = inspect.signature(interrogate_fn)
+        supports_audio_flag = "use_audio_in_video" in sig.parameters
+
         if clip_dir is None:
-            output = interrogate_fn(video, prompt)
+            if supports_audio_flag:
+                output = interrogate_fn(video, prompt, use_audio_in_video)
+            else:
+                output = interrogate_fn(video, prompt)
             return prepended + output + appended, None
         else:
             relevant_clips = []
@@ -91,7 +102,10 @@ def interrogator_block(kubin, state, title, input_video):
                 ):
                     pass
                 else:
-                    output = interrogate_fn(filepath, prompt)
+                    if supports_audio_flag:
+                        output = interrogate_fn(filepath, prompt, use_audio_in_video)
+                    else:
+                        output = interrogate_fn(filepath, prompt)
                     if use_classifier:
                         classify(filepath, output, clip_dir)
                     else:
@@ -120,6 +134,7 @@ def interrogator_block(kubin, state, title, input_video):
                     OVIS2_MODEL_ID,
                     QWEN25_VL_MODEL_ID,
                     QWEN3_OMNI_MODEL_ID,
+                    QWEN25_OMNI_AWQ_MODEL_ID,
                     SKY_CAPTIONER_MODEL_ID,
                     SHOTVL_MODEL_ID,
                     VIDEOR1_MODEL_ID,
@@ -140,6 +155,10 @@ def interrogator_block(kubin, state, title, input_video):
                 use_flash_attention = gr.Checkbox(
                     False,
                     label="Use FlashAttention",
+                )
+                use_audio_in_video = gr.Checkbox(
+                    True,
+                    label="Use audio in video",
                 )
                 activate_classifier = gr.Checkbox(
                     False,
@@ -190,6 +209,7 @@ def interrogator_block(kubin, state, title, input_video):
                             video_model,
                             quantization,
                             use_flash_attention,
+                            use_audio_in_video,
                             input_video,
                             model_prompt,
                             activate_classifier,
@@ -246,6 +266,7 @@ def interrogator_block(kubin, state, title, input_video):
                         video_model,
                         quantization,
                         use_flash_attention,
+                        use_audio_in_video,
                         input_video,
                         model_prompt,
                         activate_classifier,

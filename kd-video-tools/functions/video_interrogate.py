@@ -23,6 +23,7 @@ from qwen_25_vl import (
     init_qwen25vl,
 )
 from qwen3_omni import QWEN3_OMNI_MODEL_ID, init_qwen3omni
+from qwen25_omni_awq import QWEN25_OMNI_AWQ_MODEL_ID, init_qwen25_omni_awq
 from video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from keye_vl_8b import KEYE_VL_MODEL_ID, init_keye_vl
 from keye_vl_15 import KEYE_VL_15_MODEL_ID, init_keye_vl_15
@@ -30,10 +31,19 @@ from gemini_api import GEMINI_MODEL_ID, init_gemini
 
 
 def init_interrogate_fn(
-    kubin, state, cache_dir, device, model_name, quantization, use_flash_attention
+    kubin,
+    state,
+    cache_dir,
+    device,
+    model_name,
+    quantization,
+    use_flash_attention,
+    use_audio_in_video=False,
 ):
     current_model = state["model"]
     current_model_name = state["name"]
+
+    state["use_audio_in_video"] = use_audio_in_video
 
     if current_model is None or model_name != current_model_name:
         flush(kubin, state)
@@ -208,6 +218,15 @@ def init_interrogate_fn(
                 dir,
                 quantization,
                 QWEN3_OMNI_MODEL_ID,
+                use_flash_attention,
+            )
+        elif model_name == QWEN25_OMNI_AWQ_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("QWEN25_OMNI_AWQ_DIR", cache_dir)
+            init_qwen25_omni_awq(
+                state,
+                device,
+                dir,
+                quantization,
                 use_flash_attention,
             )
         elif model_name == GEMINI_MODEL_ID:

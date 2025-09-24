@@ -47,7 +47,7 @@ def init_qwen3omni(
     state["tokenizer"] = None
     state["q"] = q_conf
 
-    def interrogate(video_path: str, prompt: str) -> str:
+    def interrogate(video_path: str, prompt: str, use_audio_in_video: bool = False) -> str:
         try:
             messages = [
                 {
@@ -62,7 +62,7 @@ def init_qwen3omni(
             text = processor.apply_chat_template(
                 messages, add_generation_prompt=True, tokenize=False
             )
-            audios, images, videos = process_mm_info(messages, use_audio_in_video=True)
+            audios, images, videos = process_mm_info(messages, use_audio_in_video=use_audio_in_video)
 
             inputs = processor(
                 text=text,
@@ -71,14 +71,14 @@ def init_qwen3omni(
                 videos=videos,
                 return_tensors="pt",
                 padding=True,
-                use_audio_in_video=True,
+                use_audio_in_video=use_audio_in_video,
             )
 
             inputs = inputs.to(model.device).to(model.dtype)
 
             gen_kwargs = {
                 "thinker_return_dict_in_generate": True,
-                "use_audio_in_video": True,
+                "use_audio_in_video": use_audio_in_video,
                 "return_audio": False,
             }
 
