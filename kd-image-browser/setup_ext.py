@@ -50,6 +50,7 @@ def setup(kubin):
 
     def generate_video_metadata(video_path):
         from datetime import datetime
+        import json
 
         try:
             stats = os.stat(video_path)
@@ -79,12 +80,25 @@ def setup(kubin):
                 comment = video.get("\xa9cmt", [None])[0]
 
                 if comment:
-                    metadata_html += f"""
-                    <div style="padding: 10px; background: #e8f4f8; border-radius: 5px; margin-top: 10px;">
-                        <h4 style="margin-top: 0;">Generation Parameters</h4>
-                        <pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">{comment}</pre>
-                    </div>
-                    """
+                    try:
+                        metadata = json.loads(comment)
+
+                        metadata_html += f"""
+                        <div style="padding: 10px; background: #e8f4f8; border-radius: 5px; margin-top: 10px;">
+                            <h4 style="margin-top: 0;">Generation Parameters</h4>
+                        """
+
+                        for key, value in metadata.items():
+                            metadata_html += f"<p><b>{key}:</b> {value}</p>"
+
+                        metadata_html += "</div>"
+                    except json.JSONDecodeError:
+                        metadata_html += f"""
+                        <div style="padding: 10px; background: #e8f4f8; border-radius: 5px; margin-top: 10px;">
+                            <h4 style="margin-top: 0;">Generation Parameters</h4>
+                            <pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">{comment}</pre>
+                        </div>
+                        """
             except:
                 pass
 
