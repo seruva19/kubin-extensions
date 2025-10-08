@@ -3,6 +3,7 @@ from networks_selector import networks_selector_ui
 from networks_browser import networks_browser_ui
 from networks_converter import networks_converter_ui
 from networks_downloader import networks_downloader_ui
+from networks_merge_shards import networks_merge_shards_ui
 import gradio as gr
 from pathlib import Path
 from file_tools import scan_for_models, filenames_with_hash
@@ -48,6 +49,9 @@ def setup(kubin):
 
                 with gr.TabItem("Converter") as networks_converter_block:
                     networks_converter_ui(kubin)
+
+                with gr.TabItem("Merge Shards") as networks_merge_block:
+                    networks_merge_shards_ui(kubin)
 
                 # with gr.TabItem("Downloader") as networks_downloader_block:
                 #     networks_downloader_ui(kubin)
