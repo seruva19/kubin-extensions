@@ -3,7 +3,18 @@ import torch
 import sys
 import importlib.util
 import soundfile as sf
-from awq.models.base import BaseAWQForCausalLM
+
+try:
+    from awq.models.base import BaseAWQForCausalLM
+
+    AWQ_AVAILABLE = True
+except Exception as e:
+    print(
+        "Cannot import awq.\nPlease install awq package: pip install git+https://github.com/tiger-of-shawn/AutoAWQ_V2.git --no-deps"
+    )
+    AWQ_AVAILABLE = False
+    BaseAWQForCausalLM = object
+
 from transformers import Qwen2_5OmniProcessor
 from qwen_omni_utils import process_mm_info
 from huggingface_hub import hf_hub_download
@@ -102,6 +113,11 @@ class Qwen2_5_OmniAWQForConditionalGeneration(BaseAWQForCausalLM):
 
 
 def init_qwen25_omni_awq(state, device, cache_dir, quantization, use_flash_attention):
+    if not AWQ_AVAILABLE:
+        raise ImportError(
+            "AWQ is not available. Please install: pip install git+https://github.com/tiger-of-shawn/AutoAWQ_V2.git --no-deps"
+        )
+
     replace_transformers_module()
 
     state["name"] = QWEN25_OMNI_AWQ_MODEL_ID
@@ -205,7 +221,9 @@ def init_qwen25_omni_awq(state, device, cache_dir, quantization, use_flash_atten
                 messages, tokenize=False, add_generation_prompt=True
             )
 
-            audios, images, videos = process_mm_info(messages, use_audio_in_video=use_audio_in_video)
+            audios, images, videos = process_mm_info(
+                messages, use_audio_in_video=use_audio_in_video
+            )
             inputs = processor(
                 text=text,
                 audio=audios,

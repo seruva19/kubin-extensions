@@ -24,10 +24,12 @@ from qwen_25_vl import (
 )
 from qwen3_omni import QWEN3_OMNI_MODEL_ID, init_qwen3omni
 from qwen25_omni_awq import QWEN25_OMNI_AWQ_MODEL_ID, init_qwen25_omni_awq
+from qwen3_vl_30b_a3b import QWEN3_VL_30B_A3B_MODEL_ID, init_qwen3_vl_30b_a3b
 from video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from keye_vl_8b import KEYE_VL_MODEL_ID, init_keye_vl
 from keye_vl_15 import KEYE_VL_15_MODEL_ID, init_keye_vl_15
 from gemini_api import GEMINI_MODEL_ID, init_gemini
+from avocado_qwen2_5_omni import AVOCADO_MODEL_ID, init_avocado
 
 
 def init_interrogate_fn(
@@ -229,6 +231,18 @@ def init_interrogate_fn(
                 quantization,
                 use_flash_attention,
             )
+        elif model_name == QWEN3_VL_30B_A3B_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("QWEN3_VL_30B_A3B_DIR", cache_dir)
+            init_qwen3_vl_30b_a3b(
+                state,
+                device,
+                dir,
+                quantization,
+                use_flash_attention,
+            )
+        elif model_name == AVOCADO_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("AVOCADO_VLM_DIR", cache_dir)
+            init_avocado(state, device, dir, quantization, use_flash_attention)
         elif model_name == GEMINI_MODEL_ID:
             init_gemini(state)
         else:

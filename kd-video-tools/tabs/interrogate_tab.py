@@ -11,10 +11,12 @@ from ovis_16b import OVIS2_MODEL_ID
 from qwen_25_vl import QWEN25_VL_MODEL_ID, SHOTVL_MODEL_ID, SKY_CAPTIONER_MODEL_ID
 from qwen3_omni import QWEN3_OMNI_MODEL_ID
 from qwen25_omni_awq import QWEN25_OMNI_AWQ_MODEL_ID
+from qwen3_vl_30b_a3b import QWEN3_VL_30B_A3B_MODEL_ID
 from video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from gemini_api import init_gemini, GEMINI_MODEL_ID
 from keye_vl_8b import KEYE_VL_MODEL_ID
 from keye_vl_15 import KEYE_VL_15_MODEL_ID
+from avocado_qwen2_5_omni import AVOCADO_MODEL_ID
 
 from functions.video_interrogate import init_interrogate_fn
 from functions.classify_video import (
@@ -135,6 +137,8 @@ def interrogator_block(kubin, state, title, input_video):
                     QWEN25_VL_MODEL_ID,
                     QWEN3_OMNI_MODEL_ID,
                     QWEN25_OMNI_AWQ_MODEL_ID,
+                    AVOCADO_MODEL_ID,
+                    QWEN3_VL_30B_A3B_MODEL_ID,
                     SKY_CAPTIONER_MODEL_ID,
                     SHOTVL_MODEL_ID,
                     VIDEOR1_MODEL_ID,
