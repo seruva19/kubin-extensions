@@ -47,3 +47,5 @@ def classify(filepath: str, vlm_output: str, base_dir) -> bool:
         caption_file = category_folder / f"{video_path.stem}.txt"
         with open(caption_file, "w", encoding="utf-8") as f:
             f.write(caption)
+
+    return True

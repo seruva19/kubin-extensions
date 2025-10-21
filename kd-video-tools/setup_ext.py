@@ -1,6 +1,8 @@
 import gradio as gr
 from tabs.interrogate_tab import interrogator_block
 from tabs.video_select_tab import selector_block
+from tabs.video_pipeline_tab import pipeline_block
+from tabs.video_splitter_tab import splitter_block
 
 title = "Video Tools"
 
@@ -38,6 +40,10 @@ def setup(kubin):
                     interrogator_block(kubin, state, title, input_interrogate_video)
                 with gr.Tab("Video Selection", elem_id="video-selection-section"):
                     selector_block(kubin, state, title, input_selector_video)
+                with gr.Tab("Video Analyser", elem_id="video-analyser-section"):
+                    pipeline_block(kubin, state, title)
+                with gr.Tab("Video Splitter", elem_id="video-splitter-section"):
+                    splitter_block(kubin, state, title)
 
         return video_tools_block
 

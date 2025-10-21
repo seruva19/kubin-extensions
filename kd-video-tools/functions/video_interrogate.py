@@ -9,27 +9,27 @@ from decord import cpu, VideoReader, bridge
 import transformers
 from transformers.generation import GenerationMixin
 import types
-from apollo_inference import APOLLO_MODEL_ID, init_apollo
-from llava_onevision import LLAVA_MODEL_ID, init_llava
-from videochat_flash import VIDEOCHAT_MODEL_ID, init_videochat
-from minicpm_v26 import MINICPM_V_MODEL_ID, init_minicpm
-from minicpm_o26 import MINICPM_OMNI_MODEL_ID, init_minicpm_omni
-from videollama3 import VIDEOLLAMA3_MODEL_ID, init_videollama3
-from ovis_16b import OVIS2_MODEL_ID, init_ovis2
-from qwen_25_vl import (
+from providers.apollo_inference import APOLLO_MODEL_ID, init_apollo
+from providers.llava_onevision import LLAVA_MODEL_ID, init_llava
+from providers.videochat_flash import VIDEOCHAT_MODEL_ID, init_videochat
+from providers.minicpm_v26 import MINICPM_V_MODEL_ID, init_minicpm
+from providers.minicpm_o26 import MINICPM_OMNI_MODEL_ID, init_minicpm_omni
+from providers.videollama3 import VIDEOLLAMA3_MODEL_ID, init_videollama3
+from providers.ovis_16b import OVIS2_MODEL_ID, init_ovis2
+from providers.qwen_25_vl import (
     QWEN25_VL_MODEL_ID,
     SHOTVL_MODEL_ID,
     SKY_CAPTIONER_MODEL_ID,
     init_qwen25vl,
 )
-from qwen3_omni import QWEN3_OMNI_MODEL_ID, init_qwen3omni
-from qwen25_omni_awq import QWEN25_OMNI_AWQ_MODEL_ID, init_qwen25_omni_awq
-from qwen3_vl_30b_a3b import QWEN3_VL_30B_A3B_MODEL_ID, init_qwen3_vl_30b_a3b
-from video_r1 import VIDEOR1_MODEL_ID, init_videor1
-from keye_vl_8b import KEYE_VL_MODEL_ID, init_keye_vl
-from keye_vl_15 import KEYE_VL_15_MODEL_ID, init_keye_vl_15
-from gemini_api import GEMINI_MODEL_ID, init_gemini
-from avocado_qwen2_5_omni import AVOCADO_MODEL_ID, init_avocado
+from providers.qwen3_omni import QWEN3_OMNI_MODEL_ID, init_qwen3omni
+from providers.qwen25_omni_awq import QWEN25_OMNI_AWQ_MODEL_ID, init_qwen25_omni_awq
+from providers.qwen3_vl_30b_a3b import QWEN3_VL_30B_A3B_MODEL_ID, init_qwen3_vl_30b_a3b
+from providers.video_r1 import VIDEOR1_MODEL_ID, init_videor1
+from providers.keye_vl_8b import KEYE_VL_MODEL_ID, init_keye_vl
+from providers.keye_vl_15 import KEYE_VL_15_MODEL_ID, init_keye_vl_15
+from providers.gemini_api import GEMINI_MODEL_ID, init_gemini
+from providers.avocado_qwen2_5_omni import AVOCADO_MODEL_ID, init_avocado
 
 
 def init_interrogate_fn(
@@ -250,11 +250,38 @@ def init_interrogate_fn(
 
 
 def flush(kubin, state):
-    if state["model"] is not None:
-        if state["q"] is None:
-            state["model"].to("cpu")
-            state["model"] = None
-            state["tokenizer"] = None
+    # List of all possible state keys from providers that need to be cleaned up
+    state_keys_to_clear = [
+        "model", "tokenizer", "processor", "q", "vision_tower",
+        "audio_model", "audio_processor", "name", "fn", "device",
+        "text_tokenizer", "visual_tokenizer", "image_processor"
+    ]
+
+    for key in state_keys_to_clear:
+        if key in state and state[key] is not None:
+            # Move torch modules to CPU before clearing
+            if isinstance(state[key], torch.nn.Module) and hasattr(state[key], 'to'):
+                try:
+                    state[key].to("cpu")
+                except:
+                    pass  # Ignore errors during CPU transfer
+
+            state[key] = None
+
+    # Clear any additional provider-specific state keys that might be models/tensors
+    keys_to_clear = list(state.keys())
+    for key in keys_to_clear:
+        if key not in ["use_audio_in_video"]:  # Keep preserved settings
+            if key in state and state[key] is not None:
+                if isinstance(state[key], torch.nn.Module):
+                    try:
+                        state[key].to("cpu")
+                    except:
+                        pass
+                    state[key] = None
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
     kubin.model.flush(None)
 

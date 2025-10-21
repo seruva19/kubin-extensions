@@ -4,5 +4,6 @@ timm==0.9.16
 einops==0.7.0
 qwen-vl-utils==0.0.2
 peft==0.12.0
-tensorflow-cpu==2.17.0
+#tensorflow-cpu==2.17.0
+tensorflow==2.16.1
 # liger-kernel==0.5.9

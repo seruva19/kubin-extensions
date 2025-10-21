@@ -1,22 +1,22 @@
 import gradio as gr
 import os
 
-from apollo_inference import APOLLO_MODEL_ID
-from llava_onevision import LLAVA_MODEL_ID
-from videochat_flash import VIDEOCHAT_MODEL_ID
-from minicpm_v26 import MINICPM_V_MODEL_ID
-from minicpm_o26 import MINICPM_OMNI_MODEL_ID
-from videollama3 import VIDEOLLAMA3_MODEL_ID
-from ovis_16b import OVIS2_MODEL_ID
-from qwen_25_vl import QWEN25_VL_MODEL_ID, SHOTVL_MODEL_ID, SKY_CAPTIONER_MODEL_ID
-from qwen3_omni import QWEN3_OMNI_MODEL_ID
-from qwen25_omni_awq import QWEN25_OMNI_AWQ_MODEL_ID
-from qwen3_vl_30b_a3b import QWEN3_VL_30B_A3B_MODEL_ID
-from video_r1 import VIDEOR1_MODEL_ID, init_videor1
-from gemini_api import init_gemini, GEMINI_MODEL_ID
-from keye_vl_8b import KEYE_VL_MODEL_ID
-from keye_vl_15 import KEYE_VL_15_MODEL_ID
-from avocado_qwen2_5_omni import AVOCADO_MODEL_ID
+from providers.apollo_inference import APOLLO_MODEL_ID
+from providers.llava_onevision import LLAVA_MODEL_ID
+from providers.videochat_flash import VIDEOCHAT_MODEL_ID
+from providers.minicpm_v26 import MINICPM_V_MODEL_ID
+from providers.minicpm_o26 import MINICPM_OMNI_MODEL_ID
+from providers.videollama3 import VIDEOLLAMA3_MODEL_ID
+from providers.ovis_16b import OVIS2_MODEL_ID
+from providers.qwen_25_vl import QWEN25_VL_MODEL_ID, SHOTVL_MODEL_ID, SKY_CAPTIONER_MODEL_ID
+from providers.qwen3_omni import QWEN3_OMNI_MODEL_ID
+from providers.qwen25_omni_awq import QWEN25_OMNI_AWQ_MODEL_ID
+from providers.qwen3_vl_30b_a3b import QWEN3_VL_30B_A3B_MODEL_ID
+from providers.video_r1 import VIDEOR1_MODEL_ID, init_videor1
+from providers.gemini_api import init_gemini, GEMINI_MODEL_ID
+from providers.keye_vl_8b import KEYE_VL_MODEL_ID
+from providers.keye_vl_15 import KEYE_VL_15_MODEL_ID
+from providers.avocado_qwen2_5_omni import AVOCADO_MODEL_ID
 
 from functions.video_interrogate import init_interrogate_fn
 from functions.classify_video import (

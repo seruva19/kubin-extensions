@@ -31,7 +31,7 @@ Initially, it contained only extensions that were somehow related to enhancing t
 | <a id="kd-training"></a>kd-training | GUI wrapper for some Kandinsky training scripts (K2.1 fine-tuning/K2.2 LoRA) |
 | <a id="kd-upscaler"></a>kd-upscaler | Tools for upscaling, currently only [Real-ESRGAN](https://github.com/ai-forever/Real-ESRGAN) and [KandiSuperRes](https://github.com/ai-forever/KandiSuperRes) are supported |
 | <a id="kd-video"></a>kd-video | GUI for a consumer-friendly (24Gb VRAM) implementation of [Kandinsky Video](https://github.com/ai-forever/KandinskyVideo) T2V/I2V pipelines. The low-VRAM pipeline for KV1.1 is still flawed and outputs noise 🙄 |
-| <a id="kd-video-tools"></a>kd-video-tools | Tools for working with media clips (currently only video interrogation is supported) |
+| <a id="kd-video-tools"></a>kd-video-tools | Various tools for working with video files |
 
 ## Installation
 

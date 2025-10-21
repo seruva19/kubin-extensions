@@ -7,8 +7,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from functions.video_interrogate import init_interrogate_fn
-from ovis_16b import OVIS2_MODEL_ID
-from qwen_25_vl import QWEN25_VL_MODEL_ID
+from providers.ovis_16b import OVIS2_MODEL_ID
+from providers.qwen_25_vl import QWEN25_VL_MODEL_ID
 from functions.video_selector import (
     STYLE_ANALYSIS_PROMPT,
     VideoSelector,
