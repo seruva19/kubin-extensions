@@ -1,9 +1,16 @@
 import os
 import torch
-from transformers import (
-    Qwen3VLMoeForConditionalGeneration,
-    AutoProcessor,
-)
+
+try:
+    from transformers import (
+        Qwen3VLMoeForConditionalGeneration,
+        AutoProcessor,
+    )
+except ImportError:
+    print(
+        "Qwen3VLMoeForConditionalGeneration cannot be imported. Please upgrade transformers"
+    )
+
 import decord
 from qwen_vl_utils import process_vision_info
 from PIL import Image

@@ -115,7 +115,7 @@ class Qwen2_5_OmniAWQForConditionalGeneration(BaseAWQForCausalLM):
 def init_qwen25_omni_awq(state, device, cache_dir, quantization, use_flash_attention):
     if not AWQ_AVAILABLE:
         raise ImportError(
-            "AWQ is not available. Please install: pip install git+https://github.com/tiger-of-shawn/AutoAWQ_V2.git --no-deps"
+            "AWQ is not available. Please install: pip install git+https://github.com/tiger-of-shawn/AutoAWQ_V2.git --no-deps. If still getting error, you may also need to downgrade your transformers package to 4.51.3"
         )
 
     replace_transformers_module()
@@ -221,9 +221,23 @@ def init_qwen25_omni_awq(state, device, cache_dir, quantization, use_flash_atten
                 messages, tokenize=False, add_generation_prompt=True
             )
 
-            audios, images, videos = process_mm_info(
-                messages, use_audio_in_video=use_audio_in_video
-            )
+            try:
+                audios, images, videos = process_mm_info(
+                    messages, use_audio_in_video=use_audio_in_video
+                )
+                actual_use_audio = use_audio_in_video
+            except AssertionError as e:
+                if use_audio_in_video and "must has audio track" in str(e):
+                    print(
+                        f"Warning: Video has no audio track, retrying without audio flag..."
+                    )
+                    audios, images, videos = process_mm_info(
+                        messages, use_audio_in_video=False
+                    )
+                    actual_use_audio = False
+                else:
+                    raise
+
             inputs = processor(
                 text=text,
                 audio=audios,
@@ -239,7 +253,7 @@ def init_qwen25_omni_awq(state, device, cache_dir, quantization, use_flash_atten
             with torch.inference_mode():
                 output = model.generate(
                     **inputs,
-                    use_audio_in_video=use_audio_in_video,
+                    use_audio_in_video=actual_use_audio,
                     return_audio=False,
                     max_new_tokens=512,
                 )
