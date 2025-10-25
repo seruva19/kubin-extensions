@@ -30,6 +30,7 @@ from providers.keye_vl_8b import KEYE_VL_MODEL_ID, init_keye_vl
 from providers.keye_vl_15 import KEYE_VL_15_MODEL_ID, init_keye_vl_15
 from providers.gemini_api import GEMINI_MODEL_ID, init_gemini
 from providers.avocado_qwen2_5_omni import AVOCADO_MODEL_ID, init_avocado
+from providers.open_o3_video import OPEN_O3_MODEL_ID, init_open_o3_video
 
 
 def init_interrogate_fn(
@@ -243,6 +244,9 @@ def init_interrogate_fn(
         elif model_name == AVOCADO_MODEL_ID:
             dir = kubin.env_utils.load_env_value("AVOCADO_VLM_DIR", cache_dir)
             init_avocado(state, device, dir, quantization, use_flash_attention)
+        elif model_name == OPEN_O3_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("OPEN_O3_VIDEO_DIR", cache_dir)
+            init_open_o3_video(state, device, dir, quantization, use_flash_attention)
         elif model_name == GEMINI_MODEL_ID:
             init_gemini(state)
         else:
@@ -252,15 +256,25 @@ def init_interrogate_fn(
 def flush(kubin, state):
     # List of all possible state keys from providers that need to be cleaned up
     state_keys_to_clear = [
-        "model", "tokenizer", "processor", "q", "vision_tower",
-        "audio_model", "audio_processor", "name", "fn", "device",
-        "text_tokenizer", "visual_tokenizer", "image_processor"
+        "model",
+        "tokenizer",
+        "processor",
+        "q",
+        "vision_tower",
+        "audio_model",
+        "audio_processor",
+        "name",
+        "fn",
+        "device",
+        "text_tokenizer",
+        "visual_tokenizer",
+        "image_processor",
     ]
 
     for key in state_keys_to_clear:
         if key in state and state[key] is not None:
             # Move torch modules to CPU before clearing
-            if isinstance(state[key], torch.nn.Module) and hasattr(state[key], 'to'):
+            if isinstance(state[key], torch.nn.Module) and hasattr(state[key], "to"):
                 try:
                     state[key].to("cpu")
                 except:
