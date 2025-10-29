@@ -107,6 +107,11 @@ def init_keye_vl_15(state, device, cache_dir, quantization, use_flash_attention)
     def clean_output(text):
         text = re.sub(r"<analysis>.*?</analysis>", "", text, flags=re.DOTALL)
         text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+
+        answer_match = re.search(r"<answer>(.*?)</answer>", text, re.DOTALL)
+        if answer_match:
+            return answer_match.group(1).strip()
+
         return text.strip()
 
     def interrogate(file_path, question):
