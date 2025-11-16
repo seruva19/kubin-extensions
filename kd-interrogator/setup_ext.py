@@ -134,6 +134,31 @@ def setup(kubin):
                     image=i, model=vlm_model, tokenizer=tokenizer, prompt=p
                 )
 
+            elif vlm_model_id == "moondream/moondream3-preview":
+                dir = kubin.env_utils.load_env_value(
+                    "MOONDREAM3_VLM_CACHE_DIR", cache_dir
+                )
+
+                vlm_model = AutoModelForCausalLM.from_pretrained(
+                    vlm_model_id,
+                    trust_remote_code=True,
+                    torch_dtype=torch.bfloat16,
+                    device_map={"": device},
+                    cache_dir=dir,
+                )
+                vlm_model.compile()
+
+                def answer(image, model, prompt):
+                    # Use the caption skill for image description tasks
+                    result = model.caption(
+                        image=image,
+                        length="normal",  # Can be "short", "normal", or "long"
+                        settings={"temperature": 0.7, "top_p": 0.95, "max_tokens": 512},
+                    )
+                    return result["caption"]
+
+                vlm_model_fn = lambda i, p: answer(image=i, model=vlm_model, prompt=p)
+
             elif vlm_model_id == "microsoft/Florence-2-large":
                 vlm_model = AutoModelForCausalLM.from_pretrained(
                     "microsoft/Florence-2-large",
@@ -490,6 +515,7 @@ def setup(kubin):
                                     vlm_model = gr.Dropdown(
                                         choices=[
                                             "vikhyatk/moondream2",
+                                            "moondream/moondream3-preview",
                                             "microsoft/Florence-2-large",
                                             "THUDM/cogvlm2-llama3-chat-19B",
                                             "internlm/internlm-xcomposer2-4khd-7b",
@@ -540,6 +566,8 @@ def setup(kubin):
                                     )
                                     if vlm_model == "vikhyatk/moondream2":
                                         prompt = "Output the detailed description of this image."
+                                    elif vlm_model == "moondream/moondream3-preview":
+                                        prompt = "Describe this image"  # Simple prompt for caption method
                                     elif vlm_model == "microsoft/Florence-2-large":
                                         prompt = "<MORE_DETAILED_CAPTION>"
                                     elif vlm_model == "THUDM/cogvlm2-llama3-chat-19B":
