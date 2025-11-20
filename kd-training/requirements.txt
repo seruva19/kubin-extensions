@@ -1,1 +1,2 @@
 fastparquet==2023.7.0
+lion-pytorch==0.2.3

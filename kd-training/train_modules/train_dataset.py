@@ -55,10 +55,11 @@ def train_dataset_ui(kubin, tabs):
         dataframe_result = gr.HTML("", elem_id="training-dataset-df-result")
 
         with gr.Row():
+            # Include headers as the first row for Gradio 3.50.2
+            headers = ["image_name", "caption"]
             images_dataframe = gr.Dataframe(
                 max_rows=20,
                 overflow_row_behaviour="paginate",
-                headers=["image_name", "caption"],
                 datatype=["str", "str"],
                 visible=False,
                 interactive=False,
@@ -71,8 +72,17 @@ def train_dataset_ui(kubin, tabs):
 
         def show_image_and_caption(df, evt: gr.SelectData):
             index = evt.index[0]
-            image = df["image_name"][index]
-            caption = df["caption"][index]
+            # Skip header row if present (for Gradio 3.50.2 compatibility)
+            if df and df[0] and df[0][0] == "image_name":
+                if index == 0:  # Don't select the header row
+                    return [gr.update(visible=False), None, ""]
+                index -= 1  # Adjust index to skip header row
+                image = df[index][0]  # image_name column
+                caption = df[index][1]  # caption column
+            else:
+                # Original pandas DataFrame format
+                image = df["image_name"][index]
+                caption = df["caption"][index]
             return [gr.update(visible=True), image, caption]
 
         images_dataframe.select(
@@ -143,7 +153,10 @@ def train_dataset_ui(kubin, tabs):
 def load_dataframe(csv_path):
     if os.path.exists(csv_path):
         df = pd.read_csv(csv_path)
-        return gr.update(value=df, visible=True), "", False
+        # Include headers as the first row for Gradio 3.50.2
+        headers = ["image_name", "caption"]
+        df_with_headers = [headers] + df.values.tolist()
+        return gr.update(value=df_with_headers, visible=True), "", False
 
     return gr.update(visible=False), "Dataset does not exist", True
 

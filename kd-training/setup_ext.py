@@ -11,6 +11,7 @@ from train_modules.train_22.train_22_decoder_ui import train_22_decoder_ui
 from train_modules.train_22.train_22_prior_ui import train_22_prior_ui
 from train_modules.lora_22.train_lora_prior_ui import train_lora_prior_ui
 from train_modules.lora_22.train_lora_decoder_ui import train_lora_decoder_ui
+from train_modules.kd5.train_kd5_ui import train_kd5_ui
 
 extension_title = "Training"
 
@@ -63,6 +64,10 @@ def setup(kubin):
 
                     with gr.TabItem("UnCLIP", id="training-unclip"):
                         training_kd21_unclip_ui = train_unclip_ui(kubin, training_tabs)
+
+                with gr.TabItem("Kandinsky 5", id="training-kd5") as training_kd5:
+                    training_kd5.elem_classes = ["training-selector-kd5"]
+                    kd5_block = train_kd5_ui(kubin, training_tabs)
 
                 with gr.TabItem("Dataset", id="training-dataset"):
                     tools_ui = train_dataset_ui(kubin, training_tabs)

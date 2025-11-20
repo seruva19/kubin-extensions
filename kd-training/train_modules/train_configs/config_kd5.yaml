@@ -1,0 +1,89 @@
+variant:
+  name: 5s_sft
+  config: kd-training/train_modules/kd5/model_configs/config_5s_sft.yaml
+  scheduler_scale: 5.0
+paths:
+  cache_dir: train/kd5/cache
+  output_dir: train/kd5/output
+  logging_dir: train/kd5/logs
+  checkpoint_dir: train/kd5/checkpoints
+datasets:
+- name: dataset_0
+  raw_path: train/kd5/dataset
+  cache_name: dataset_0
+  resolution: 512
+  frames: 16
+  fps: 24
+  shuffle: true
+  num_workers: 2
+  weight: 1.0
+  bucket:
+    mode: auto
+    min_size: 256
+    max_width: 768
+    max_height: 512
+    divisible: 64
+    step_size: 64
+    max_ar_error: 0.05
+    max_buckets: 12
+  aspect_buckets: []
+training:
+  use_lora: true
+  lora_rank: 64
+  lora_alpha: 64
+  lora_dropout: 0.1
+  lora_target_modules:
+  - to_query
+  - to_key
+  - to_value
+  - self_attention.out_layer
+  - cross_attention.out_layer
+  - feed_forward.in_layer
+  - feed_forward.out_layer
+  learning_rate: 0.0001
+  optimizer: adamw8bit
+  scheduler: cosine
+  train_batch_size: 1
+  gradient_accumulation_steps: 16
+  num_train_epochs: 1
+  max_train_steps: null
+  warmup_steps: 500
+  mixed_precision: bf16
+  gradient_checkpointing: true
+  max_grad_norm: 1.0
+  save_steps: 500
+  validation_steps: 0
+  report_to: tensorboard
+  seed: 42
+  resume_from_checkpoint: null
+caching:
+  enabled: true
+  cache_latents: true
+  cache_text: true
+  overwrite: false
+optimization:
+  enable_xformers: true
+  enable_flash_attention: true
+  offload_to_cpu: true
+  snr_gamma: null
+outputs:
+  save_every_n_steps: 1000
+  keep_last_n_checkpoints: 3
+previews:
+  enabled: false
+  step_interval: 500
+  epoch_interval: 1
+  output_dir: null
+  prompts:
+  - text: A cinematic drone shot over a futuristic coastal city at golden hour
+    negative: low quality, distorted, artifacts
+    time_length: 5
+    seed: 1234
+    width: 768
+    height: 512
+  - text: Portrait of an explorer in a snowy forest, volumetric lighting
+    negative: blurry, duplicated faces
+    time_length: 0
+    seed: 2024
+    width: 512
+    height: 512
