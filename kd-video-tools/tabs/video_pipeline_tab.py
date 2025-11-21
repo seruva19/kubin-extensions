@@ -200,6 +200,7 @@ def pipeline_block(kubin, state, title):
         min_duration,
         max_duration,
         min_quality_score,
+        filter_order,
         score_extension,
         embedding_extension,
         progress=gr.Progress(),
@@ -241,29 +242,51 @@ def pipeline_block(kubin, state, title):
                     all_videos, embedding_extension
                 )
 
-                # Apply filters (same logic as actual function)
+                # Apply filters based on selected order
                 filtered_videos = all_videos.copy()
 
-                # Filter by duration
-                if min_duration > 0 or max_duration < 999:
-                    duration_filtered = []
-                    for video in filtered_videos:
-                        duration = video_processor.get_video_duration(video)
-                        if duration and min_duration <= duration <= max_duration:
-                            duration_filtered.append(video)
-                    filtered_videos = duration_filtered
+                if filter_order == "Duration → Score":
+                    # Filter by duration first
+                    if min_duration > 0 or max_duration < 999:
+                        duration_filtered = []
+                        for video in filtered_videos:
+                            duration = video_processor.get_video_duration(video)
+                            if duration and min_duration <= duration <= max_duration:
+                                duration_filtered.append(video)
+                        filtered_videos = duration_filtered
 
-                # Filter by minimum quality score
-                if min_quality_score > 0:
-                    quality_filtered = []
-                    for video in filtered_videos:
-                        if video in video_processor.quality_scores:
-                            score = video_processor.quality_scores[video].get(
-                                "final_score", 0
-                            )
-                            if score >= min_quality_score:
-                                quality_filtered.append(video)
-                    filtered_videos = quality_filtered
+                    # Then filter by minimum quality score
+                    if min_quality_score > 0:
+                        quality_filtered = []
+                        for video in filtered_videos:
+                            if video in video_processor.quality_scores:
+                                score = video_processor.quality_scores[video].get(
+                                    "final_score", 0
+                                )
+                                if score >= min_quality_score:
+                                    quality_filtered.append(video)
+                        filtered_videos = quality_filtered
+                else:  # "Score → Duration"
+                    # Filter by quality score first
+                    if min_quality_score > 0:
+                        quality_filtered = []
+                        for video in filtered_videos:
+                            if video in video_processor.quality_scores:
+                                score = video_processor.quality_scores[video].get(
+                                    "final_score", 0
+                                )
+                                if score >= min_quality_score:
+                                    quality_filtered.append(video)
+                        filtered_videos = quality_filtered
+
+                    # Then filter by duration
+                    if min_duration > 0 or max_duration < 999:
+                        duration_filtered = []
+                        for video in filtered_videos:
+                            duration = video_processor.get_video_duration(video)
+                            if duration and min_duration <= duration <= max_duration:
+                                duration_filtered.append(video)
+                        filtered_videos = duration_filtered
 
                 # Select diverse high-quality videos (without copying)
                 candidate_videos = [
@@ -334,6 +357,7 @@ def pipeline_block(kubin, state, title):
         min_duration,
         max_duration,
         min_quality_score,
+        filter_order,
         target_dir,
         resample_fps,
         preserve_structure,
@@ -401,26 +425,49 @@ def pipeline_block(kubin, state, title):
                     all_videos, embedding_extension
                 )
 
-                # Filter by duration
-                if min_duration > 0 or max_duration < 999:
-                    filtered_videos = []
-                    for video in all_videos:
-                        duration = video_processor.get_video_duration(video)
-                        if duration and min_duration <= duration <= max_duration:
-                            filtered_videos.append(video)
-                    all_videos = filtered_videos
-
-                # Filter by minimum quality score
-                if min_quality_score > 0:
-                    filtered_videos = []
-                    for video in all_videos:
-                        if video in video_processor.quality_scores:
-                            score = video_processor.quality_scores[video].get(
-                                "final_score", 0
-                            )
-                            if score >= min_quality_score:
+                # Apply filters based on selected order
+                if filter_order == "Duration → Score":
+                    # Filter by duration first
+                    if min_duration > 0 or max_duration < 999:
+                        filtered_videos = []
+                        for video in all_videos:
+                            duration = video_processor.get_video_duration(video)
+                            if duration and min_duration <= duration <= max_duration:
                                 filtered_videos.append(video)
-                    all_videos = filtered_videos
+                        all_videos = filtered_videos
+
+                    # Then filter by minimum quality score
+                    if min_quality_score > 0:
+                        filtered_videos = []
+                        for video in all_videos:
+                            if video in video_processor.quality_scores:
+                                score = video_processor.quality_scores[video].get(
+                                    "final_score", 0
+                                )
+                                if score >= min_quality_score:
+                                    filtered_videos.append(video)
+                        all_videos = filtered_videos
+                else:  # "Score → Duration"
+                    # Filter by quality score first
+                    if min_quality_score > 0:
+                        filtered_videos = []
+                        for video in all_videos:
+                            if video in video_processor.quality_scores:
+                                score = video_processor.quality_scores[video].get(
+                                    "final_score", 0
+                                )
+                                if score >= min_quality_score:
+                                    filtered_videos.append(video)
+                        all_videos = filtered_videos
+
+                    # Then filter by duration
+                    if min_duration > 0 or max_duration < 999:
+                        filtered_videos = []
+                        for video in all_videos:
+                            duration = video_processor.get_video_duration(video)
+                            if duration and min_duration <= duration <= max_duration:
+                                filtered_videos.append(video)
+                        all_videos = filtered_videos
 
                 if not all_videos:
                     all_results.append(f"{folder_name}: No videos passed filters")
@@ -581,7 +628,7 @@ def pipeline_block(kubin, state, title):
                     )
 
                     qual_overwrite = gr.Checkbox(
-                        True, label="Overwrite existing .score files"
+                        False, label="Overwrite existing .score files"
                     )
 
                     qual_calculate_btn = gr.Button(
@@ -632,7 +679,7 @@ def pipeline_block(kubin, state, title):
                     )
                 with gr.Row():
                     emb_overwrite = gr.Checkbox(
-                        True, label="Overwrite existing .embedding files"
+                        False, label="Overwrite existing .embedding files"
                     )
 
                     emb_calculate_btn = gr.Button(
@@ -679,6 +726,13 @@ def pipeline_block(kubin, state, title):
                         value=0.5,
                         step=0.05,
                         label="Minimum Quality Score (0 = no filter)",
+                    )
+
+                    sel_filter_order = gr.Radio(
+                        choices=["Duration → Score", "Score → Duration"],
+                        value="Duration → Score",
+                        label="Filter Order",
+                        info="Duration first is faster, Score first may preserve quality better",
                     )
 
                     sel_target_dir = gr.Textbox(
@@ -809,6 +863,7 @@ def pipeline_block(kubin, state, title):
                 sel_min_duration,
                 sel_max_duration,
                 sel_min_quality,
+                sel_filter_order,
                 sel_score_extension,
                 sel_embedding_extension,
             ],
@@ -829,6 +884,7 @@ def pipeline_block(kubin, state, title):
                 sel_min_duration,
                 sel_max_duration,
                 sel_min_quality,
+                sel_filter_order,
                 sel_target_dir,
                 sel_resample_fps,
                 sel_preserve_structure,
