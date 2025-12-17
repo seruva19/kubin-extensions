@@ -25,12 +25,21 @@ from providers.qwen_25_vl import (
 from providers.qwen3_omni import QWEN3_OMNI_MODEL_ID, init_qwen3omni
 from providers.qwen25_omni_awq import QWEN25_OMNI_AWQ_MODEL_ID, init_qwen25_omni_awq
 from providers.qwen3_vl_30b_a3b import QWEN3_VL_30B_A3B_MODEL_ID, init_qwen3_vl_30b_a3b
+from providers.qwen3_vl_8b_instruct import (
+    QWEN3_VL_8B_INSTRUCT_MODEL_ID,
+    init_qwen3_vl_8b_instruct,
+)
 from providers.video_r1 import VIDEOR1_MODEL_ID, init_videor1
 from providers.keye_vl_8b import KEYE_VL_MODEL_ID, init_keye_vl
 from providers.keye_vl_15 import KEYE_VL_15_MODEL_ID, init_keye_vl_15
 from providers.gemini_api import GEMINI_MODEL_ID, init_gemini
 from providers.avocado_qwen2_5_omni import AVOCADO_MODEL_ID, init_avocado
 from providers.open_o3_video import OPEN_O3_MODEL_ID, init_open_o3_video
+from providers.nemotron_nano_12b_v2_vl import (
+    NEMOTRON_NANO_12B_V2_VL_MODEL_ID,
+    init_nemotron_nano_12b_v2_vl,
+)
+from providers.molmo2_8b import MOLMO2_8B_MODEL_ID, init_molmo2_8b
 
 
 def init_interrogate_fn(
@@ -241,6 +250,15 @@ def init_interrogate_fn(
                 quantization,
                 use_flash_attention,
             )
+        elif model_name == QWEN3_VL_8B_INSTRUCT_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("QWEN3_VL_8B_INSTRUCT_DIR", cache_dir)
+            init_qwen3_vl_8b_instruct(
+                state,
+                device,
+                dir,
+                quantization,
+                use_flash_attention,
+            )
         elif model_name == AVOCADO_MODEL_ID:
             dir = kubin.env_utils.load_env_value("AVOCADO_VLM_DIR", cache_dir)
             init_avocado(state, device, dir, quantization, use_flash_attention)
@@ -249,6 +267,26 @@ def init_interrogate_fn(
             init_open_o3_video(state, device, dir, quantization, use_flash_attention)
         elif model_name == GEMINI_MODEL_ID:
             init_gemini(state)
+        elif model_name == NEMOTRON_NANO_12B_V2_VL_MODEL_ID:
+            dir = kubin.env_utils.load_env_value(
+                "NEMOTRON_NANO_12B_V2_VL_DIR", cache_dir
+            )
+            init_nemotron_nano_12b_v2_vl(
+                state,
+                device,
+                dir,
+                quantization,
+                use_flash_attention,
+            )
+        elif model_name == MOLMO2_8B_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("MOLMO2_8B_DIR", cache_dir)
+            init_molmo2_8b(
+                state,
+                device,
+                dir,
+                quantization,
+                use_flash_attention,
+            )
         else:
             raise ValueError(f"unknown model name: {model_name}")
 

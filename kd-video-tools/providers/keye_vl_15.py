@@ -24,8 +24,10 @@ def init_keye_vl_15(state, device, cache_dir, quantization, use_flash_attention)
     elif quantization == "int8":
         q_conf = BitsAndBytesConfig(load_in_8bit=True)
 
+    # Based on official Keye-VL-1.5 docs: use max_frames for video control
+    # Setting a more conservative VIDEO_MAX_PIXELS to reduce VRAM usage
     if "VIDEO_MAX_PIXELS" not in os.environ:
-        os.environ["VIDEO_MAX_PIXELS"] = str(int(32000 * 28 * 28 * 0.9))
+        os.environ["VIDEO_MAX_PIXELS"] = str(int(16000 * 28 * 28))  # ~12.5M pixels
 
     model_load_errors = []
     name_variants = [
@@ -136,7 +138,12 @@ def init_keye_vl_15(state, device, cache_dir, quantization, use_flash_attention)
                 {
                     "role": "user",
                     "content": [
-                        {"type": "video", "video": file_path, "fps": 2.0},
+                        {
+                            "type": "video",
+                            "video": file_path,
+                            "fps": 2.0,
+                            "max_frames": 1024,  # Limit frames as per official docs
+                        },
                         {"type": "text", "text": question},
                     ],
                 }
@@ -192,6 +199,19 @@ def init_keye_vl_15(state, device, cache_dir, quantization, use_flash_attention)
 
                 cleaned_text = clean_output(generated_text)
 
+                # Explicit cleanup to free VRAM
+                del generated_ids
+                del output_text
+                del inputs
+                if images is not None:
+                    del images
+                if videos is not None:
+                    del videos
+
+                # Force garbage collection and clear CUDA cache
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+
                 return cleaned_text
 
         except Exception as e:
@@ -199,6 +219,26 @@ def init_keye_vl_15(state, device, cache_dir, quantization, use_flash_attention)
             import traceback
 
             traceback.print_exc()
+
+            # Cleanup on error to prevent VRAM leaks
+            try:
+                if "generated_ids" in locals():
+                    del generated_ids
+                if "output_text" in locals():
+                    del output_text
+                if "inputs" in locals():
+                    del inputs
+                if "images" in locals() and images is not None:
+                    del images
+                if "videos" in locals() and videos is not None:
+                    del videos
+
+                # Force garbage collection and clear CUDA cache
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except:
+                pass  # Ignore cleanup errors
+
             return None
 
     state["fn"] = interrogate
