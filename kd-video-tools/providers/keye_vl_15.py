@@ -1,6 +1,19 @@
 import os
 import torch
 from transformers import AutoModel, AutoProcessor, BitsAndBytesConfig
+
+try:
+    from transformers import activations as _transformers_activations
+except Exception:  # pragma: no cover - fallback for older transformers
+    _transformers_activations = None
+
+if _transformers_activations is not None and not hasattr(_transformers_activations, "PytorchGELUTanh"):
+    try:
+        from transformers.activations import GELUTanh as _GELUTanh
+    except Exception:  # pragma: no cover - last-resort fallback
+        _GELUTanh = None
+    if _GELUTanh is not None:
+        _transformers_activations.PytorchGELUTanh = _GELUTanh
 from keye_vl_utils import process_vision_info
 import re
 

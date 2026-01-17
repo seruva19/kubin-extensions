@@ -78,6 +78,8 @@ def interrogator_block(kubin, state, title, input_video):
                 output = interrogate_fn(video, prompt, use_audio_in_video)
             else:
                 output = interrogate_fn(video, prompt)
+            if output is None:
+                return "Error: Model inference failed. Check console for details.", None
             return prepended + output + appended, None
         else:
             relevant_clips = []
@@ -116,6 +118,11 @@ def interrogator_block(kubin, state, title, input_video):
                         output = interrogate_fn(filepath, prompt, use_audio_in_video)
                     else:
                         output = interrogate_fn(filepath, prompt)
+
+                    if output is None:
+                        print(f"Warning: Failed to interrogate {filepath}, skipping...")
+                        continue
+
                     if use_classifier:
                         classify(filepath, output, clip_dir)
                     else:
