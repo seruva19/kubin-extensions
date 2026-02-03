@@ -25,6 +25,7 @@ except Exception:  # pragma: no cover - fallback for older transformers
     _transformers_utils = None
 
 if _video_utils is not None and not hasattr(_video_utils, "make_batched_metadata"):
+
     def _make_batched_metadata(videos, video_metadata=None):
         # Minimal shim for older transformers versions.
         if video_metadata is None:
@@ -47,7 +48,10 @@ if _video_utils is not None and not hasattr(_video_utils, "make_batched_metadata
 
     _video_utils.make_batched_metadata = _make_batched_metadata
 
-if _transformers_utils is not None and not hasattr(_transformers_utils, "is_torchcodec_available"):
+if _transformers_utils is not None and not hasattr(
+    _transformers_utils, "is_torchcodec_available"
+):
+
     def _is_torchcodec_available():
         # Older transformers versions don't expose torchcodec integration.
         return False
@@ -128,7 +132,9 @@ def init_molmo2_8b(
     else:
         state["q"] = q_conf
 
-    def interrogate(file_path: str, question: str, use_audio_in_video: bool = False) -> str:
+    def interrogate(
+        file_path: str, question: str, use_audio_in_video: bool = False
+    ) -> str:
         """
         Interrogate a video or image file with a text question.
 
@@ -175,7 +181,7 @@ def init_molmo2_8b(
                         "role": "user",
                         "content": [
                             {"type": "text", "text": question},
-                            {"type": "video", "video": file_path, max_fps=8},
+                            {"type": "video", "video": file_path, "max_fps": 8},
                         ],
                     }
                 ]
@@ -210,7 +216,9 @@ def init_molmo2_8b(
                         # Normalize uint8 [0, 255] to float [0, 1]
                         v = v.float() / 255.0
                     result = v.to(device, dtype=torch_dtype)
-                    print(f"  -> Converted to dtype={result.dtype}, device={result.device}")
+                    print(
+                        f"  -> Converted to dtype={result.dtype}, device={result.device}"
+                    )
                     return result
                 # Convert standalone uint8/int8 image tensors (legacy)
                 elif v.dtype in [torch.uint8, torch.int8]:
@@ -219,9 +227,16 @@ def init_molmo2_8b(
                         v = v.float() / 255.0
                     return v.to(device, dtype=torch_dtype)
                 # Convert float tensors to model dtype
-                elif v.dtype in [torch.float16, torch.float32, torch.bfloat16, torch.float64]:
+                elif v.dtype in [
+                    torch.float16,
+                    torch.float32,
+                    torch.bfloat16,
+                    torch.float64,
+                ]:
                     result = v.to(device, dtype=torch_dtype)
-                    print(f"  -> Converted to dtype={result.dtype}, device={result.device}")
+                    print(
+                        f"  -> Converted to dtype={result.dtype}, device={result.device}"
+                    )
                     return result
                 # Move other tensors (like input_ids, pooling indices) to device without dtype change
                 else:

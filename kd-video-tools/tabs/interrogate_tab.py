@@ -25,6 +25,7 @@ from providers.avocado_qwen2_5_omni import AVOCADO_MODEL_ID
 from providers.open_o3_video import OPEN_O3_MODEL_ID
 from providers.nemotron_nano_12b_v2_vl import NEMOTRON_NANO_12B_V2_VL_MODEL_ID
 from providers.molmo2_8b import MOLMO2_8B_MODEL_ID
+from providers.step3_vl_10b import STEP3_VL_10B_MODEL_ID
 
 from functions.video_interrogate import init_interrogate_fn
 from functions.classify_video import (
@@ -163,6 +164,7 @@ def interrogator_block(kubin, state, title, input_video):
                     OPEN_O3_MODEL_ID,
                     NEMOTRON_NANO_12B_V2_VL_MODEL_ID,
                     MOLMO2_8B_MODEL_ID,
+                    STEP3_VL_10B_MODEL_ID,
                     GEMINI_MODEL_ID,
                 ],
                 value="THUDM/cogvlm2-video-llama3-chat",

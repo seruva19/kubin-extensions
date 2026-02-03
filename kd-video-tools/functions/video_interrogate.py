@@ -40,6 +40,7 @@ from providers.nemotron_nano_12b_v2_vl import (
     init_nemotron_nano_12b_v2_vl,
 )
 from providers.molmo2_8b import MOLMO2_8B_MODEL_ID, init_molmo2_8b
+from providers.step3_vl_10b import STEP3_VL_10B_MODEL_ID, init_step3_vl_10b
 
 
 def init_interrogate_fn(
@@ -281,6 +282,15 @@ def init_interrogate_fn(
         elif model_name == MOLMO2_8B_MODEL_ID:
             dir = kubin.env_utils.load_env_value("MOLMO2_8B_DIR", cache_dir)
             init_molmo2_8b(
+                state,
+                device,
+                dir,
+                quantization,
+                use_flash_attention,
+            )
+        elif model_name == STEP3_VL_10B_MODEL_ID:
+            dir = kubin.env_utils.load_env_value("STEP3_VL_10B_DIR", cache_dir)
+            init_step3_vl_10b(
                 state,
                 device,
                 dir,
