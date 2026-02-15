@@ -12,8 +12,77 @@ import re
 import pandas as pd
 import torch
 import os
+import json
+from pathlib import Path
 
 title = "Interrogator"
+
+
+class InterrogatorSettings:
+    """Settings storage for kd-interrogator extension using JSON file."""
+
+    def __init__(self, ext_path: str):
+        self.settings_file = Path(ext_path) / "settings.json"
+        self._settings_cache = None
+        self._defaults = {
+            "model_index": 0,
+            "clip_model": "ViT-L-14/openai",
+            "mode": "fast",
+            "blip_model_type": "blip-large",
+            "chunk_size": 2048,
+            "vlm_model": "vikhyatk/moondream2",
+            "vlm_prompt": "Output the detailed description of this image.",
+            "quantization": "4bit",
+            "prepend_text": "",
+            "append_text": "",
+            "batch_mode": 0,
+            "image_extensions": [".jpg", ".jpeg", ".png", ".bmp"],
+            "skip_existing": True,
+            "remove_line_breaks": False,
+            "caption_extension": ".txt",
+            "output_csv": "captions.csv",
+        }
+
+    def _load(self) -> dict:
+        if self._settings_cache is not None:
+            print(f"[Interrogator] Using cached settings: {self._settings_cache}")
+            return self._settings_cache
+
+        if self.settings_file.exists():
+            try:
+                print(
+                    f"[Interrogator] Loading settings from file: {self.settings_file}"
+                )
+                with open(self.settings_file, "r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                    self._settings_cache = {**self._defaults, **loaded}
+                    print(f"[Interrogator] Loaded settings: {self._settings_cache}")
+                    return self._settings_cache
+            except (json.JSONDecodeError, IOError) as e:
+                print(f"Failed to load interrogator settings: {e}")
+
+        print(f"[Interrogator] No settings file found, using defaults")
+        return self._defaults.copy()
+
+    def save(self, settings: dict) -> None:
+        try:
+            print(f"[Interrogator] Saving settings to {self.settings_file}: {settings}")
+            with open(self.settings_file, "w", encoding="utf-8") as f:
+                json.dump(settings, f, indent=2)
+            self._settings_cache = settings
+            print(f"[Interrogator] Settings saved successfully")
+        except IOError as e:
+            print(f"Failed to save interrogator settings: {e}")
+
+    def get(self, key: str, default=None):
+        settings = self._load()
+        return settings.get(
+            key, default if default is not None else self._defaults.get(key)
+        )
+
+    def get_all(self) -> dict:
+        return self._load().copy()
+
 
 from unittest.mock import patch
 from transformers.dynamic_module_utils import get_imports
@@ -29,6 +98,8 @@ def fixed_get_imports(filename: str | os.PathLike) -> list[str]:
 
 def setup(kubin):
     cache_dir = kubin.params("general", "cache_dir")
+    ext_path = Path(__file__).parent.absolute()
+    settings = InterrogatorSettings(str(ext_path))
 
     CAPTION_MODELS = {
         "blip-base": "Salesforce/blip-image-captioning-base",
@@ -146,16 +217,16 @@ def setup(kubin):
                     device_map={"": device},
                     cache_dir=dir,
                 )
-                vlm_model.compile()
+                vlm_model.eval()
 
                 def answer(image, model, prompt):
-                    # Use the caption skill for image description tasks
-                    result = model.caption(
-                        image=image,
-                        length="normal",  # Can be "short", "normal", or "long"
-                        settings={"temperature": 0.7, "top_p": 0.95, "max_tokens": 512},
-                    )
-                    return result["caption"]
+                    # Encode the image
+                    enc_image = model.encode_image(image)
+
+                    # Use answer_question for custom prompts
+                    # Moondream 3's answer_question doesn't require a separate tokenizer
+                    result = model.answer_question(enc_image, prompt)
+                    return result
 
                 vlm_model_fn = lambda i, p: answer(image=i, model=vlm_model, prompt=p)
 
@@ -338,6 +409,22 @@ def setup(kubin):
         appended_txt,
         quantization,
     ):
+        # Save settings after successful interrogation
+        settings.save(
+            {
+                "model_index": model_index,
+                "clip_model": clip_model,
+                "mode": mode,
+                "blip_model_type": blip_type,
+                "chunk_size": chunk_size,
+                "vlm_model": vlm_model,
+                "vlm_prompt": vlm_prompt,
+                "quantization": quantization,
+                "prepend_text": prepended_txt,
+                "append_text": appended_txt,
+            }
+        )
+
         if model_index == 0:
             return interrogate(
                 image,
@@ -407,6 +494,28 @@ def setup(kubin):
         quantization,
         progress=gr.Progress(),
     ):
+        # Save settings after batch interrogation
+        settings.save(
+            {
+                "model_index": model_index,
+                "clip_model": clip_model,
+                "mode": mode,
+                "blip_model_type": blip_type,
+                "chunk_size": chunk_size,
+                "vlm_model": vlm_model,
+                "vlm_prompt": vlm_prompt,
+                "quantization": quantization,
+                "prepend_text": prepended_txt,
+                "append_text": appended_txt,
+                "batch_mode": batch_mode,
+                "image_extensions": image_extensions,
+                "skip_existing": skip_existing,
+                "remove_line_breaks": remove_line_breaks,
+                "caption_extension": caption_extension,
+                "output_csv": output_csv,
+            }
+        )
+
         if output_dir == "":
             output_dir = image_dir
         os.makedirs(output_dir, exist_ok=True)
@@ -479,9 +588,17 @@ def setup(kubin):
         return f"Captions for {len(relevant_images)} images created"
 
     def interrogator_ui(ui_shared, ui_tabs):
+        # Load saved settings
+        saved = settings.get_all()
+        print(f"[Interrogator] Loading saved settings: {saved}")
+        print(f"[Interrogator] Settings file path: {settings.settings_file}")
+        print(f"[Interrogator] Settings file exists: {settings.settings_file.exists()}")
+
         with gr.Row() as interrogator_block:
             with gr.Column(scale=1) as interrogator_params_block:
-                with gr.Tabs(selected=0) as interrogator_panels:
+                with gr.Tabs(
+                    selected=saved.get("model_index", 0)
+                ) as interrogator_panels:
                     with gr.Tab("CLIP", id=0):
                         with gr.Row():
                             clip_model = gr.Dropdown(
@@ -489,24 +606,28 @@ def setup(kubin):
                                     "ViT-L-14/openai",
                                     "ViT-H-14/laion2b_s32b_b79k",
                                 ],
-                                value="ViT-L-14/openai",
+                                value=saved.get("clip_model", "ViT-L-14/openai"),
                                 label="CLIP model",
                             )
                         with gr.Row():
                             mode = gr.Radio(
                                 ["best", "classic", "fast", "negative"],
-                                value="fast",
+                                value=saved.get("mode", "fast"),
                                 label="Mode",
                             )
                         with gr.Row():
                             blip_model_type = gr.Radio(
                                 ["blip-base", "blip-large", "git-large-coco"],
-                                value="blip-large",
+                                value=saved.get("blip_model_type", "blip-large"),
                                 label="Caption model name",
                             )
                         with gr.Row():
                             chunk_size = gr.Slider(
-                                512, 2048, 2048, step=512, label="Chunk size"
+                                512,
+                                2048,
+                                saved.get("chunk_size", 2048),
+                                step=512,
+                                label="Chunk size",
                             )
                     with gr.Tab("VLM", id=1):
                         with gr.Row() as vlm_interrogator_block:
@@ -532,12 +653,17 @@ def setup(kubin):
                                             "AIDC-AI/Ovis2-16B",
                                             "SicariusSicariiStuff/X-Ray_Alpha",
                                         ],
-                                        value="vikhyatk/moondream2",
+                                        value=saved.get(
+                                            "vlm_model", "vikhyatk/moondream2"
+                                        ),
                                         label="VLM name",
                                     )
                                 with gr.Row():
                                     vlm_prompt = gr.Textbox(
-                                        "Output the detailed description of this image.",
+                                        saved.get(
+                                            "vlm_prompt",
+                                            "Output the detailed description of this image.",
+                                        ),
                                         label="System prompt",
                                         lines=3,
                                         max_lines=3,
@@ -545,7 +671,7 @@ def setup(kubin):
 
                                 with gr.Row() as additional_params:
                                     quantization = gr.Dropdown(
-                                        value="4bit",
+                                        value=saved.get("quantization", "4bit"),
                                         choices=["None", "8bit", "4bit"],
                                         label="Quantization",
                                         scale=1,
@@ -567,7 +693,7 @@ def setup(kubin):
                                     if vlm_model == "vikhyatk/moondream2":
                                         prompt = "Output the detailed description of this image."
                                     elif vlm_model == "moondream/moondream3-preview":
-                                        prompt = "Describe this image"  # Simple prompt for caption method
+                                        prompt = "Describe this image in detail, including all visible elements and their characteristics."
                                     elif vlm_model == "microsoft/Florence-2-large":
                                         prompt = "<MORE_DETAILED_CAPTION>"
                                     elif vlm_model == "THUDM/cogvlm2-llama3-chat-19B":
@@ -635,7 +761,7 @@ def setup(kubin):
                             vlm_interrogator_params_block.elem_classes = [
                                 "block-params"
                             ]
-                model_index = gr.State(0)
+                model_index = gr.State(saved.get("model_index", 0))
 
                 def on_tabs_select(evt: gr.SelectData):
                     return evt.index
@@ -644,13 +770,13 @@ def setup(kubin):
 
                 with gr.Row() as extra_params_block:
                     prepend_text = gr.Textbox(
-                        "",
+                        saved.get("prepend_text", ""),
                         label="Text to prepend caption with",
                         lines=2,
                         max_lines=2,
                     )
                     append_text = gr.Textbox(
-                        "",
+                        saved.get("append_text", ""),
                         label="Text to append to caption",
                         lines=2,
                         max_lines=2,
@@ -701,7 +827,10 @@ def setup(kubin):
                         with gr.Row():
                             image_types = gr.CheckboxGroup(
                                 [".jpg", ".jpeg", ".png", ".bmp"],
-                                value=[".jpg", ".jpeg", ".png", ".bmp"],
+                                value=saved.get(
+                                    "image_extensions",
+                                    [".jpg", ".jpeg", ".png", ".bmp"],
+                                ),
                                 label="Files to interrogate",
                             )
 
@@ -709,17 +838,21 @@ def setup(kubin):
                             caption_mode = gr.Radio(
                                 choices=["text files", "csv dataset"],
                                 info="Save captions to separate text files or to a single csv file",
-                                value="text files",
+                                value=(
+                                    "text files"
+                                    if saved.get("batch_mode", 0) == 0
+                                    else "csv dataset"
+                                ),
                                 label="Caption save mode",
                                 type="index",
                             )
                             with gr.Column():
                                 skip_existing = gr.Checkbox(
-                                    True,
+                                    saved.get("skip_existing", True),
                                     label="Skip if caption exists",
                                 )
                                 remove_line_breaks = gr.Checkbox(
-                                    False,
+                                    saved.get("remove_line_breaks", False),
                                     label="Remove line breaks",
                                 )
 
@@ -729,13 +862,13 @@ def setup(kubin):
                         )
 
                         caption_extension = gr.Textbox(
-                            ".txt",
+                            saved.get("caption_extension", ".txt"),
                             label="Caption files extension",
                             visible=True,
                         )
 
                         output_csv = gr.Textbox(
-                            value="captions.csv",
+                            value=saved.get("output_csv", "captions.csv"),
                             label="Name of csv file",
                             visible=False,
                         )

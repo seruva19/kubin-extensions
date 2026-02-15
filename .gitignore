@@ -6,4 +6,5 @@ __pycache__
 /*/config.yaml
 /*/*custom.yaml
 /*/*user.yaml
+/*/settings.json
 !/*/config.default.yaml
